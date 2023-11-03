@@ -49,7 +49,6 @@ with tab2:
 with tab3:
     conn = st.connection('s3', type=FilesConnection)
     jsonfile = conn.read("virgo-data/panel_signals.json", input_format="json")
-
     st.json(jsonfile)
 
     #fig = plotly.io.from_json(jsonfile)
