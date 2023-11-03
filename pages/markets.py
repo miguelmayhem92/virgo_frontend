@@ -3,6 +3,7 @@ import time
 import numpy as np
 import plotly.express as px
 import plotly
+from st_files_connection import FilesConnection
 
 import json
 import re
@@ -40,10 +41,15 @@ with tab2:
     # Use the native Plotly theme.
     st.plotly_chart(fig, theme="streamlit", use_container_width=True)
 
-with tab3:
+#with tab3:
     
-    fig = plotly.io.read_json('C:/Users/Miguel/Dropbox/virgo/^GSPC/panel_signals.json')
-    st.plotly_chart(fig, theme="streamlit", use_container_width=True)
+#    fig = plotly.io.read_json('C:/Users/Miguel/Dropbox/virgo/^GSPC/panel_signals.json')
+#    st.plotly_chart(fig, theme="streamlit", use_container_width=True)
+
+with tab3:
+    conn = st.connection('s3', type=FilesConnection)
+    jsonfile = conn.read("virgo-data/panel_signals.json", input_format="json")
+    print('done!')
 
 # Streamlit widgets automatically run the script from top to bottom. Since
 # this button is not connected to any other logic, it just causes a plain
