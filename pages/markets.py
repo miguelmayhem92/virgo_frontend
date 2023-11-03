@@ -49,8 +49,11 @@ with tab2:
 with tab3:
     conn = st.connection('s3', type=FilesConnection)
     jsonfile = conn.read("virgo-data/panel_signals.json", input_format="json")
-    fig = plotly.io.from_json(jsonfile)
-    st.plotly_chart(fig, theme="streamlit", use_container_width=True)
+
+    st.json(jsonfile)
+
+    #fig = plotly.io.from_json(jsonfile)
+    #st.plotly_chart(fig, theme="streamlit", use_container_width=True)
     
 
 # Streamlit widgets automatically run the script from top to bottom. Since
