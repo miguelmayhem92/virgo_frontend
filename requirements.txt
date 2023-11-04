@@ -1,5 +1,6 @@
 streamlit
 s3fs
+pyyaml
 st-files-connection
 matplotlib==3.6.3
 numpy==1.23.5
