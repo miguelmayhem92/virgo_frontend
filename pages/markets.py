@@ -20,7 +20,7 @@ Streamlit. We're generating a bunch of random numbers in a loop for around
 5 seconds. Enjoy!"""
 )
 
-debug_mode = True
+debug_mode = False
 
 configs = yaml.safe_load(Path('configs.yaml').read_text())
 market_indexes = configs["market_indexes"]
