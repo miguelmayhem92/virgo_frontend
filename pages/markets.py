@@ -6,7 +6,8 @@ import plotly
 from st_files_connection import FilesConnection
 
 import json
-import re
+import yaml
+from pathlib import Path
 
 st.set_page_config(page_title="Plotting Demo", page_icon="📈", layout="wide")
 
@@ -19,40 +20,25 @@ Streamlit. We're generating a bunch of random numbers in a loop for around
 5 seconds. Enjoy!"""
 )
 
-df = px.data.gapminder()
+debug_mode = True
 
-fig = px.scatter(
-    df.query("year==2007"),
-    x="gdpPercap",
-    y="lifeExp",
-    size="pop",
-    color="continent",
-    hover_name="country",
-    log_x=True,
-    size_max=60,
-)
+configs = yaml.safe_load(Path('configs.yaml').read_text())
+market_indexes = configs["market_indexes"]
+tabs = st.tabs(market_indexes)
 
-tab1, tab2, tab3 = st.tabs(["Streamlit theme (default)", "Plotly native theme", "test html"])
-with tab1:
-    # Use the Streamlit theme.
-    # This is the default. So you can also omit the theme argument.
-    st.plotly_chart(fig, theme="streamlit", use_container_width=True)
-with tab2:
-    # Use the native Plotly theme.
-    st.plotly_chart(fig, theme="streamlit", use_container_width=True)
-
-#with tab3:
-    
-#    fig = plotly.io.read_json('C:/Users/Miguel/Dropbox/virgo/^GSPC/panel_signals.json')
-#    st.plotly_chart(fig, theme="streamlit", use_container_width=True)
-
-with tab3:
-    conn = st.connection('s3', type=FilesConnection)
-    jsonfile = conn.read("virgo-data/panel_signals.json", input_format="json")
-    json_dump = json.dumps(jsonfile)
-    fig = plotly.io.from_json(json_dump)
-    st.plotly_chart(fig, theme="streamlit", use_container_width=True)
-    
+if debug_mode:
+    for tab,index in zip(tabs,market_indexes):
+        with tab:
+            fig = plotly.io.read_json(f'C:/Users/Miguel/Dropbox/virgo/{index}/panel_signals.json')
+            st.plotly_chart(fig, theme="streamlit", use_container_width=True)
+else:
+    for tab,index in zip(tabs,market_indexes):
+        with tab:
+            conn = st.connection('s3', type=FilesConnection)
+            jsonfile = conn.read(f"virgo-data/market_plots/{index}/panel_signals.json", input_format="json")
+            json_dump = json.dumps(jsonfile)
+            fig = plotly.io.from_json(json_dump)
+            st.plotly_chart(fig, theme="streamlit", use_container_width=True)
 
 # Streamlit widgets automatically run the script from top to bottom. Since
 # this button is not connected to any other logic, it just causes a plain
