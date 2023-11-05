@@ -4,3 +4,4 @@ market_indexes:
   - "^IXIC"
   - "^NYA"
   - "^FCHI"
+local_storage: "C:/Users/Miguel/Dropbox"
