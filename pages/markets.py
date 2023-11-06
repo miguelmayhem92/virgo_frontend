@@ -58,9 +58,9 @@ else:
     if st.button('Launch'):
         for tab in tabs:
             with tab:
-                conn = st.connection('s3', type=FilesConnection, ttl=0)
+                conn = st.connection('s3', type=FilesConnection)
                 try:
-                    market_message = conn.read(f"virgo-data/market_plots/{index}/market_message.json", input_format="json")
+                    market_message = conn.read(f"virgo-data/market_plots/{index}/market_message.json", input_format="json", ttl=0)
                     message1 = market_message['current_state']
                     message2 = market_message['current_step_state']
                     message3 = market_message['report_date']
@@ -71,7 +71,7 @@ else:
                 except:
                     st.write("no text was recorded :(")
                 try:
-                    jsonfile = conn.read(f"virgo-data/market_plots/{index}/panel_signals.json", input_format="json")
+                    jsonfile = conn.read(f"virgo-data/market_plots/{index}/panel_signals.json", input_format="json", ttl=0)
                     json_dump = json.dumps(jsonfile)
                     fig = plotly.io.from_json(json_dump)
                     st.plotly_chart(fig, theme="streamlit", use_container_width=True)
