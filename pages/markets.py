@@ -11,7 +11,6 @@ from pathlib import Path
 
 st.set_page_config(page_title="Plotting Demo", page_icon="📈", layout="wide")
 
-
 st.markdown("# Plotting Demo")
 st.sidebar.header("Plotting Demo")
 st.write(

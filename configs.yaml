@@ -4,4 +4,9 @@ market_indexes:
   - "^IXIC"
   - "^NYA"
   - "^FCHI"
+multi_symbols:
+  - "top-low"
+  - "down_tickers"
+  - "in_market"
 local_storage: "C:/Users/Miguel/Dropbox"
+local_tmps_research: "C:/Users/Miguel/virgo_api/research_env/tmp_plots"  
