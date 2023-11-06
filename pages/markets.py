@@ -58,7 +58,7 @@ else:
     if st.button('Launch'):
         for tab in tabs:
             with tab:
-                conn = st.connection('s3', type=FilesConnection)
+                conn = st.connection('s3', type=FilesConnection, ttl=0)
                 try:
                     market_message = conn.read(f"virgo-data/market_plots/{index}/market_message.json", input_format="json")
                     message1 = market_message['current_state']
