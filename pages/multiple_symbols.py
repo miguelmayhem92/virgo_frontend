@@ -1,13 +1,9 @@
 import streamlit as st
-import time
-import numpy as np
-import plotly.express as px
 import plotly
-from st_files_connection import FilesConnection
-
 import json
 import yaml
 from pathlib import Path
+from utils import get_connection
 
 st.set_page_config(page_title="Plotting Demo", page_icon="📈", layout="wide")
 
@@ -32,9 +28,9 @@ multi_symbol_selection = st.selectbox(
 
 tabs = st.tabs(['dashboard'])
 
-if debug_mode:
-    local_storage = configs["local_tmps"]
-    if st.button('Launch'):
+if st.button('Launch'):
+    if debug_mode:
+        local_storage = configs["local_tmps"]
         for tab in tabs:
             with tab:
                 try:
@@ -42,11 +38,10 @@ if debug_mode:
                     st.plotly_chart(fig, theme="streamlit", use_container_width=True)
                 except:
                     st.write("no plot available :(")
-else:
-    if st.button('Launch'):
+    else:
         for tab in tabs:
             with tab:
-                conn = st.connection('s3', type=FilesConnection)
+                conn = get_connection()
                 try:
                     jsonfile = conn.read(f"virgo-data/multi_dashboards/{multi_symbol_selection}.json", input_format="json", ttl=30)
                     json_dump = json.dumps(jsonfile)

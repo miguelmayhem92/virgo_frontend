@@ -1,14 +1,9 @@
 import streamlit as st
-import time
-import numpy as np
-import plotly.express as px
 import plotly
-from st_files_connection import FilesConnection
-
 import json
 import yaml
 from pathlib import Path
-
+from utils import get_connection
 
 st.set_page_config(page_title="Plotting Demo", page_icon="📈", layout="wide")
 
@@ -40,9 +35,9 @@ options = st.multiselect(
 
 tabs = st.tabs(['overview'])
 
-if debug_mode:
-    local_storage = configs["local_tmps_market_research"]
-    if st.button('Launch'):
+if st.button('Launch'):
+    if debug_mode:
+        local_storage = configs["local_tmps_market_research"]
         for tab in tabs:
             with tab:
                 try:
@@ -64,11 +59,10 @@ if debug_mode:
                         st.plotly_chart(fig, theme="streamlit", use_container_width=True)
                     except:
                         st.write("no plot available :(")
-else:
-    if st.button('Launch'):
+    else:
         for tab in tabs:
             with tab:
-                conn = st.connection('s3', type=FilesConnection)
+                conn = get_connection()
                 try:
                     market_message = conn.read(f"virgo-data/market_plots/{index}/market_message.json", input_format="json", ttl=30)
                     message1 = market_message['current_state']

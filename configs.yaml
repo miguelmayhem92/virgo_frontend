@@ -1,5 +1,4 @@
-debug_mode:
-  - False
+debug_mode: False
 market_indexes:
   - "^GSPC"
   - "^DJI"
