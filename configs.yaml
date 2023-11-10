@@ -1,3 +1,5 @@
+debug_mode:
+  - False
 market_indexes:
   - "^GSPC"
   - "^DJI"
@@ -8,5 +10,17 @@ multi_symbols:
   - "top-low"
   - "down_tickers"
   - "in_market"
-local_storage: "C:/Users/Miguel/Dropbox"
-local_tmps_research: "C:/Users/Miguel/virgo_api/research_env/tmp_plots"  
+market_plots:
+  - "panel signals": "panel_signals.json"
+  - "forecast" : "forecast_plot.json"
+  - "states analysis" : "hmm_analysis.json"
+  - "states scaled time series" : "ts_hmm.json"
+asset_plots:
+  - "panel signals": "panel_signals.json"
+  - "states analysis" : "hmm_analysis.json"
+  - "states scaled time series" : "ts_hmm.json"
+
+
+local_tmps: "C:/Users/Miguel/virgo_api/research_env/tmp_plots"
+local_tmps_market_research: "C:/Users/Miguel/virgo_api/research_env/tmp_plots/tmp_market"  
+local_tmps_asset_research: "C:/Users/Miguel/virgo_api/research_env/tmp_plots/tmp_asset"  

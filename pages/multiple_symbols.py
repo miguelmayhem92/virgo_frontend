@@ -19,9 +19,10 @@ Streamlit. We're generating a bunch of random numbers in a loop for around
 5 seconds. Enjoy!"""
 )
 
-debug_mode = False
+
 
 configs = yaml.safe_load(Path('configs.yaml').read_text())
+debug_mode = configs["debug_mode"]
 multi_symbols = configs["multi_symbols"]
 
 multi_symbol_selection = st.selectbox(
@@ -32,7 +33,7 @@ multi_symbol_selection = st.selectbox(
 tabs = st.tabs(['dashboard'])
 
 if debug_mode:
-    local_storage = configs["local_tmps_research"]
+    local_storage = configs["local_tmps"]
     if st.button('Launch'):
         for tab in tabs:
             with tab:
@@ -47,7 +48,7 @@ else:
             with tab:
                 conn = st.connection('s3', type=FilesConnection)
                 try:
-                    jsonfile = conn.read(f"virgo-data/multi_dashboards/{multi_symbol_selection}.json", input_format="json", ttl=0)
+                    jsonfile = conn.read(f"virgo-data/multi_dashboards/{multi_symbol_selection}.json", input_format="json", ttl=30)
                     json_dump = json.dumps(jsonfile)
                     fig = plotly.io.from_json(json_dump)
                     st.plotly_chart(fig, theme="streamlit", use_container_width=True)
