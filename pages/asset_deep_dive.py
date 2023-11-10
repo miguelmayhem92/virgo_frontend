@@ -60,7 +60,7 @@ if st.button('Launch'):
             with tab:
                 conn = get_connection()
                 try:
-                    market_message = conn.read(f"virgo-data/market_plots/{symbol_name}market_message.json", input_format="json", ttl=30)
+                    market_message = conn.read(f"virgo-data/market_plots/{symbol_name}/market_message.json", input_format="json", ttl=30)
                     message1 = market_message['current_state']
                     message2 = market_message['current_step_state']
                     message3 = market_message['report_date']

@@ -1,10 +1,10 @@
 debug_mode: False
 market_indexes:
-  - "^GSPC"
-  - "^DJI"
-  - "^IXIC"
-  - "^NYA"
-  - "^FCHI"
+  - "S&P 500" : "^GSPC"
+  - "Dow Jones Industrial" : "^DJI"
+  - "NASDAQ" : "^IXIC"
+  - "NYSE" : "^NYA"
+  - "CAC 40" : "^FCHI"
 multi_symbols:
   - "top-low"
   - "down_tickers"

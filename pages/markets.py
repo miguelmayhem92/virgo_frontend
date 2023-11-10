@@ -18,12 +18,15 @@ Streamlit. We're generating a bunch of random numbers in a loop for around
 configs = yaml.safe_load(Path('configs.yaml').read_text())
 debug_mode = configs["debug_mode"]
 market_indexes = configs["market_indexes"]
+market_indexes = {k:v for list_item in market_indexes for (k,v) in list_item.items()}
+
 market_plots = configs["market_plots"]
 market_plots = {k:v for list_item in market_plots for (k,v) in list_item.items()}
 
+market_indexes_ = list(market_indexes.keys())
 index = st.selectbox(
     'select one option',
-    tuple(market_indexes)
+    tuple(market_indexes_)
 )
 
 market_plots_ = list(market_plots.keys())
@@ -34,6 +37,7 @@ options = st.multiselect(
 )
 
 tabs = st.tabs(['overview'])
+index_symbol = market_indexes[index]
 
 if st.button('Launch'):
     if debug_mode:
@@ -41,7 +45,7 @@ if st.button('Launch'):
         for tab in tabs:
             with tab:
                 try:
-                    with open(f'{local_storage}/{index}/market_message.json') as json_file:
+                    with open(f'{local_storage}/{index_symbol}/market_message.json') as json_file:
                         market_message = json.load(json_file)
                     message1 = market_message['current_state']
                     message2 = market_message['current_step_state']
@@ -55,7 +59,7 @@ if st.button('Launch'):
                 for plot_name in options:
                     name = market_plots[plot_name]
                     try:
-                        fig = plotly.io.read_json(f'{local_storage}/{index}/{name}')
+                        fig = plotly.io.read_json(f'{local_storage}/{index_symbol}/{name}')
                         st.plotly_chart(fig, theme="streamlit", use_container_width=True)
                     except:
                         st.write("no plot available :(")
@@ -64,7 +68,7 @@ if st.button('Launch'):
             with tab:
                 conn = get_connection()
                 try:
-                    market_message = conn.read(f"virgo-data/market_plots/{index}/market_message.json", input_format="json", ttl=30)
+                    market_message = conn.read(f"virgo-data/market_plots/{index_symbol}/market_message.json", input_format="json", ttl=30)
                     message1 = market_message['current_state']
                     message2 = market_message['current_step_state']
                     message3 = market_message['report_date']
@@ -77,7 +81,7 @@ if st.button('Launch'):
                 for plot_name in options:
                     name = market_plots[plot_name]
                     try:
-                        jsonfile = conn.read(f"virgo-data/market_plots/{index}/{name}", input_format="json", ttl=30)
+                        jsonfile = conn.read(f"virgo-data/market_plots/{index_symbol}/{name}", input_format="json", ttl=30)
                         json_dump = json.dumps(jsonfile)
                         fig = plotly.io.from_json(json_dump)
                         st.plotly_chart(fig, theme="streamlit", use_container_width=True)
