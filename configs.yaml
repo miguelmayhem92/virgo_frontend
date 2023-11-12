@@ -18,8 +18,10 @@ asset_plots:
   - "panel signals": "panel_signals.json"
   - "states analysis" : "hmm_analysis.json"
   - "states scaled time series" : "ts_hmm.json"
-
-
+signals:
+  - "RSI"
+  - "rel_MA_spread"
+  - "pair_z_score"
 local_tmps: "C:/Users/Miguel/virgo_api/research_env/tmp_plots"
 local_tmps_market_research: "C:/Users/Miguel/virgo_api/research_env/tmp_plots/tmp_market"  
 local_tmps_asset_research: "C:/Users/Miguel/virgo_api/research_env/tmp_plots/tmp_asset"  

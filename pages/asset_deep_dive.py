@@ -4,6 +4,9 @@ import json
 import yaml
 from pathlib import Path
 from utils import get_connection
+from PIL import Image
+
+import pandas as pd
 
 st.set_page_config(page_title="Plotting Demo", page_icon="📈", layout="wide")
 
@@ -29,58 +32,100 @@ options = st.multiselect(
     asset_plots_[0:2]
 )
 
-tabs = st.tabs(['overview'])
+signals = configs['signals']
+
+tab_overview, tab_signal, tab_market = st.tabs(['overview', 'signal back-test', 'market risk'])
 
 if st.button('Launch'):
     if debug_mode:
         local_storage = configs["local_tmps_asset_research"]
-        for tab in tabs:
-            with tab:
-                try:
-                    with open(f'{local_storage}/{symbol_name}/market_message.json') as json_file:
-                        market_message = json.load(json_file)
-                    message1 = market_message['current_state']
-                    message2 = market_message['current_step_state']
-                    message3 = market_message['report_date']
-                    st.write(f"status:")
-                    st.write(f"current state: {message1}")
-                    st.write(f"current step in the state: {message2}")
-                    st.write(f"report date: {message3}")
-                except:
-                    st.write("no text was recorded :(")
-                for plot_name in options:
-                    name = asset_plots[plot_name]
-                    try:
-                        fig = plotly.io.read_json(f'{local_storage}/{symbol_name}/{name}')
-                        st.plotly_chart(fig, theme="streamlit", use_container_width=True)
-                    except:
-                        st.write("no plot available :(")
     else:
-        for tab in tabs:
-            with tab:
-                conn = get_connection()
-                try:
-                    market_message = conn.read(f"virgo-data/market_plots/{symbol_name}/market_message.json", input_format="json", ttl=30)
-                    message1 = market_message['current_state']
-                    message2 = market_message['current_step_state']
-                    message3 = market_message['report_date']
-                    st.write(f"status:")
-                    st.write(f"current state: {message1}")
-                    st.write(f"current step in the state: {message2}")
-                    st.write(f"report date: {message3}")
-                except:
-                    st.write("no text was recorded :(")
-                for plot_name in options:
-                    name = asset_plots[plot_name]
-                    try:
-                        jsonfile = conn.read(f"virgo-data/market_plots/{symbol_name}/{name}", input_format="json", ttl=30)
-                        json_dump = json.dumps(jsonfile)
-                        fig = plotly.io.from_json(json_dump)
-                        st.plotly_chart(fig, theme="streamlit", use_container_width=True)
-                    except:
-                        st.write("no plot available :(")
+        conn = get_connection()
 
-# Streamlit widgets automatically run the script from top to bottom. Since
-# this button is not connected to any other logic, it just causes a plain
-# rerun.
+    with tab_overview:
+        try:
+            if debug_mode:
+                market_message = json.load(open(f'{local_storage}/{symbol_name}/market_message.json'))
+            else:
+                market_message = conn.read(f"virgo-data/market_plots/{symbol_name}/market_message.json", input_format="json", ttl=30)
+
+            message1 = market_message['current_state']
+            message2 = market_message['current_step_state']
+            message3 = market_message['report_date']
+            st.write(f"status:")
+            st.write(f"{message1}")
+            st.write(f"{message2}")
+            st.write(f"{message3}")
+        except:
+            st.write("no text was recorded :(")
+        for plot_name in options:
+            name = asset_plots[plot_name]
+            try:
+                if debug_mode:
+                    fig = plotly.io.read_json(f'{local_storage}/{symbol_name}/{name}')
+                else:
+                    jsonfile = conn.read(f"virgo-data/market_plots/{symbol_name}/{name}", input_format="json", ttl=30)
+                    json_dump = json.dumps(jsonfile)
+                    fig = plotly.io.from_json(json_dump)
+
+                st.plotly_chart(fig, theme="streamlit", use_container_width=True)
+            except:
+                st.write("no plot available :(")
+
+        with tab_signal:
+            for signal in signals:
+                st.write(f"{signal}")
+                try:
+                    name = f'signals_strategy_distribution_{signal}.png'
+                    if debug_mode:
+                        fig = Image.open(f'{local_storage}/{symbol_name}/{name}')
+                    else:
+                        fig = conn.read(f"virgo-data/market_plots/{symbol_name}/{name}", input_format="png", ttl=30)
+                    st.image(fig)
+                except:
+                    st.write("no plot available :(")
+                try:
+                    name = str(f'signals_strategy_return_{signal}.json' )
+                    if debug_mode:
+                        message = json.load(open(f'{local_storage}/{symbol_name}/{name}'))
+                    else:
+                        message = conn.read(f"virgo-data/market_plots/{symbol_name}/{name}", input_format="json", ttl=30)
+                    message1 = message['benchmark']
+                    message2 = message['strategy']
+                    st.write(f"{message1}")
+                    st.write(f"{message2}")
+                except:
+                    st.write("no plot available :(")
+                try:
+                    name = f'signals_strategy_return_{signal}.png'
+                    if debug_mode:
+                        fig = Image.open(f'{local_storage}/{symbol_name}/{name}')
+                    else:
+                        fig = conn.read(f"virgo-data/market_plots/{symbol_name}/{name}", input_format="png", ttl=30)
+
+                    st.image(fig)
+                except:
+                    st.write("no plot available :(")
+
+        with tab_market:
+            st.write(f"best fit market index")
+            try:
+                name = 'market_best_fit.csv'
+                if debug_mode:
+                    df = pd.read_csv(f'{local_storage}/{symbol_name}/{name}')
+                else:
+                    df = conn.read(f"virgo-data/market_plots/{symbol_name}/{name}", input_format="csv", ttl=30)
+                st.dataframe(df)
+            except:
+                st.write("no plot available :(")
+            try:
+                name = f'market_best_fit.png' 
+                if debug_mode:
+                    fig = Image.open(f'{local_storage}/{symbol_name}/{name}')
+                else:
+                    fig = conn.read(f"virgo-data/market_plots/{symbol_name}/{name}", input_format="png", ttl=30)
+                st.image(fig)
+            except:
+                st.write("no plot available :(")
+  
 st.button("Re-run")
