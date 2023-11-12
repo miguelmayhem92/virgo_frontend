@@ -37,6 +37,14 @@ signals = configs['signals']
 tab_overview, tab_signal, tab_market = st.tabs(['overview', 'signal back-test', 'market risk'])
 
 if st.button('Launch'):
+    name = f'signals_strategy_return_RSI.png'
+    conn = get_connection()
+    file_stream = conn.read(f"virgo-data/market_plots/{symbol_name}/{name}", input_format="png", ttl=30)
+    fig = Image.open(file_stream)
+    st.image(fig)
+
+
+if st.button('Launch'):
     if debug_mode:
         local_storage = configs["local_tmps_asset_research"]
     else:
