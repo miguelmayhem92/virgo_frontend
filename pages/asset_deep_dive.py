@@ -80,7 +80,8 @@ if st.button('Launch'):
                     if debug_mode:
                         fig = Image.open(f'{local_storage}/{symbol_name}/{name}')
                     else:
-                        fig = conn.read(f"virgo-data/market_plots/{symbol_name}/{name}", input_format="png", ttl=30)
+                        file_stream = conn.read(f"virgo-data/market_plots/{symbol_name}/{name}", input_format="png", ttl=30)
+                        fig = Image.open(file_stream)
                     st.image(fig)
                 except:
                     st.write("no plot available :(")
@@ -101,8 +102,8 @@ if st.button('Launch'):
                     if debug_mode:
                         fig = Image.open(f'{local_storage}/{symbol_name}/{name}')
                     else:
-                        fig = conn.read(f"virgo-data/market_plots/{symbol_name}/{name}", input_format="png", ttl=30)
-
+                        file_stream = conn.read(f"virgo-data/market_plots/{symbol_name}/{name}", input_format="png", ttl=30)
+                        fig = Image.open(file_stream)
                     st.image(fig)
                 except:
                     st.write("no plot available :(")
@@ -123,7 +124,8 @@ if st.button('Launch'):
                 if debug_mode:
                     fig = Image.open(f'{local_storage}/{symbol_name}/{name}')
                 else:
-                    fig = conn.read(f"virgo-data/market_plots/{symbol_name}/{name}", input_format="png", ttl=30)
+                    file_stream = conn.read(f"virgo-data/market_plots/{symbol_name}/{name}", input_format="png", ttl=30)
+                    fig = Image.open(file_stream)
                 st.image(fig)
             except:
                 st.write("no plot available :(")
