@@ -3,7 +3,7 @@ import plotly
 import json
 import yaml
 from pathlib import Path
-from utils import get_connection
+from utils import get_connection, s3_image_reader
 from PIL import Image
 
 import pandas as pd
@@ -38,9 +38,10 @@ tab_overview, tab_signal, tab_market = st.tabs(['overview', 'signal back-test', 
 
 if st.button('Launch'):
     name = f'signals_strategy_return_RSI.png'
-    conn = get_connection()
-    file_stream = conn.read(f"virgo-data/market_plots/{symbol_name}/{name}", input_format="png", ttl=30)
-    fig = Image.open(file_stream)
+    # conn = get_connection()
+    # file_stream = conn.read(f"virgo-data/market_plots/{symbol_name}/{name}", input_format="png", ttl=30)
+    # fig = Image.open(file_stream)
+    fig = s3_image_reader(bucket = "virgo-data",key = f"market_plots/{symbol_name}/{name}")
     st.image(fig)
 
 
