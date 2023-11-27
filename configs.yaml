@@ -1,10 +1,16 @@
 debug_mode: False
 market_indexes:
   - "S&P 500" : "^GSPC"
-  - "Dow Jones Industrial" : "^DJI"
+  - "Dow Jones" : "^DJI"
   - "NASDAQ" : "^IXIC"
   - "NYSE" : "^NYA"
   - "CAC 40" : "^FCHI"
+  - "NYCE Amex" : "^XAX"
+  - "Russell 2000" : "^RUT"
+  - "CBOE volatility" : "^VIX"
+  - "FTSE 100" : "^FTSE" 
+  - "Euronext 100" : "^N100"
+  - "DAX" : "^GDAXI"
 multi_symbols:
   - "top-low"
   - "down_tickers"
