@@ -4,15 +4,23 @@ import json
 import yaml
 from pathlib import Path
 from utils import get_connection
+from utils import logo
 
-st.set_page_config(page_title="Plotting Demo", page_icon="📈", layout="wide")
+logo()
 
-st.markdown("# Plotting Demo")
-st.sidebar.header("Plotting Demo")
+
+st.markdown("# Multiple assets")
+
 st.write(
-    """This virgo demo illustrates a combination of plotting and animation with
-Streamlit. We're generating a bunch of random numbers in a loop for around
-5 seconds. Enjoy!"""
+     """
+    Here you can explore some rankings and investment possibilities
+    you have three lits:
+    - top low, it a list of low momentum assets
+    - down tickers are the assets that have persisting negative returns
+    - and in-market, my current portfolio
+    
+    Note that the plots can take about 5 seconds to load the data
+    """
 )
 
 

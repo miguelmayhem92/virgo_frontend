@@ -4,15 +4,23 @@ import json
 import yaml
 from pathlib import Path
 from utils import get_connection
+from utils import logo, print_object
 
-st.set_page_config(page_title="Plotting Demo", page_icon="📈", layout="wide")
+logo()
 
-st.markdown("# Plotting Demo")
-st.sidebar.header("Plotting Demo")
+
+st.markdown("# Markets analysis")
+
 st.write(
-    """This virgo demo illustrates a combination of plotting and animation with
-Streamlit. We're generating a bunch of random numbers in a loop for around
-5 seconds. Enjoy!"""
+    """
+    Here you can explore the main market indexes such as S&P500 CAC40, etc
+    some features of the analysis are:
+    * signal time series visualization
+    * hidden markov model analysis
+    * and market forecasting
+    
+    Note that the plots can take about 5 seconds to load the data
+    """
 )
 
 configs = yaml.safe_load(Path('configs.yaml').read_text())
@@ -42,37 +50,18 @@ index_symbol = market_indexes[index]
 if st.button('Launch'):
     if debug_mode:
         local_storage = configs["local_tmps_market_research"]
+        conn = False
     else:
         conn = get_connection()
-
+        local_storage = False
+        
     with tab_overview:
-        try:
-            if debug_mode:
-                market_message = json.load(open(f'{local_storage}/{index_symbol}/market_message.json'))
-            else:
-                market_message = conn.read(f"virgo-data/market_plots/{index_symbol}/market_message.json", input_format="json", ttl=30)
-            message1 = market_message['current_state']
-            message2 = market_message['current_step_state']
-            message3 = market_message['report_date']
-            st.write(f"status:")
-            st.write(f"{message1}")
-            st.write(f"{message2}")
-            st.write(f"{message3}")
-        except:
-            st.write("no text was recorded :(")
-
         for plot_name in options:
-            name = market_plots[plot_name]
-            try:
-                if debug_mode:
-                    fig = plotly.io.read_json(f'{local_storage}/{index_symbol}/{name}')
-                else:
-                    jsonfile = conn.read(f"virgo-data/market_plots/{index_symbol}/{name}", input_format="json", ttl=30)
-                    json_dump = json.dumps(jsonfile)
-                    fig = plotly.io.from_json(json_dump)
+            object = market_plots[plot_name]
+            name = object['name']
+            type_ = object['data_type']
 
-                st.plotly_chart(fig, theme="streamlit", use_container_width=True)
-            except:
-                st.write("no plot available :(")
+            print_object(name, type_, index_symbol, debug_mode, local_storage, conn)
+            
     
 st.button("Re-run")

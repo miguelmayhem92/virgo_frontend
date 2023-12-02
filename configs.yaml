@@ -1,4 +1,4 @@
-debug_mode: False
+debug_mode: True
 market_indexes:
   - "S&P 500" : "^GSPC"
   - "Dow Jones" : "^DJI"
@@ -16,14 +16,31 @@ multi_symbols:
   - "down_tickers"
   - "in_market"
 market_plots:
-  - "panel signals": "panel_signals.json"
-  - "forecast" : "forecast_plot.json"
-  - "states analysis" : "hmm_analysis.json"
-  - "states scaled time series" : "ts_hmm.json"
+  - "panel signals": 
+      name : "panel_signals.json"
+      data_type : "plot"
+  - "current state": 
+      name: "market_message.json"
+      data_type : "message"
+  - "forecast" : 
+      name: "forecast_plot.json"
+      data_type : "plot"
+  - "states scaled time series" : 
+      name: "ts_hmm.json"
+      data_type : "plot"
 asset_plots:
-  - "panel signals": "panel_signals.json"
-  - "states analysis" : "hmm_analysis.json"
-  - "states scaled time series" : "ts_hmm.json"
+  - "panel signals": 
+      name: "panel_signals.json"
+      data_type : "plot"
+  - "current state": 
+      name: "market_message.json"
+      data_type : "message"
+  - "states analysis" : 
+      name: "hmm_analysis.json"
+      data_type : "plot"
+  - "states scaled time series" : 
+      name: "ts_hmm.json"
+      data_type : "plot"
 signals:
   - "RSI"
   - "rel_MA_spread"

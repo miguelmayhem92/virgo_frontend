@@ -1,28 +1,20 @@
 import streamlit as st
+from utils import logo
 
-st.set_page_config(
-    page_title="Hello",
-    page_icon="👋",
-)
 
-st.write("# Welcome to Streamlit! 👋")
+logo()
 
-st.sidebar.success("Select a demo above.")
+st.write("# Welcome to Virgo! 📈")
 
 st.markdown(
     """
-    Streamlit is an open-source app framework built specifically for
-    Machine Learning and Data Science projects.
-    **👈 Select a demo from the sidebar** to see some examples
-    of what Streamlit can do!
-    ### Want to learn more?
-    - Check out [streamlit.io](https://streamlit.io)
-    - Jump into our [documentation](https://docs.streamlit.io)
-    - Ask a question in our [community
-        forums](https://discuss.streamlit.io)
-    ### See more complex demos
-    - Use a neural net to [analyze the Udacity Self-driving Car Image
-        Dataset](https://github.com/streamlit/demo-self-driving)
-    - Explore a [New York City rideshare dataset](https://github.com/streamlit/demo-uber-nyc-pickups)
+    Virgo is an statistical arbitrage app that is meant to mine investing oportunities in financial markets. 
+    Virgo uses advanced statistical techniques and machine learning that help people to take better investment decisions.
+    **👈 Select a functionality from the sidebar** and see what Virgo can do :mechanical_arm:
+    ### The functionalities:
+    - **Asset deep dive** explore signals, trends, and other statical prperties of your favorite assets (Markov hidden models, strategy backtest, market risk)
+    - **Markets** get a view of the most important market indexes. Also get some analysis thanks to signals, market forecasting and Markov hidden states
+    - **multiple symbols** explore in a dashboard possible investment candidates thanks to signal processing
+
 """
 )
