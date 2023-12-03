@@ -1,8 +1,12 @@
 import streamlit as st
 from utils import logo
+import yaml
+from pathlib import Path
 
+configs = yaml.safe_load(Path('configs.yaml').read_text())
+debug_mode = configs["debug_mode"]
 
-logo()
+logo(debug_mode)
 
 st.write("# Welcome to Virgo! 📈")
 
