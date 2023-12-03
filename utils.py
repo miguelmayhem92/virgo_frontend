@@ -32,7 +32,7 @@ def logo(debug_mode):
     if debug_mode:
         add_logo(".\images\log_white.png", height=150)
     else:
-        add_logo("https://github.com/miguelmayhem92/virgo_frontend/blob/main/images/log_white.png", height=150)
+        add_logo("https://raw.githubusercontent.com/miguelmayhem92/virgo_frontend/main/images/log_white.png", height=150)
 
 
 def print_object(name, type, symbol_name, debug_mode = True, local_storage =True, conn = False):
