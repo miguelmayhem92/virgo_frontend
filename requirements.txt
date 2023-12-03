@@ -1,5 +1,5 @@
 streamlit
-pip install streamlit-extras
+streamlit-extras
 s3fs
 pyyaml
 st-files-connection
