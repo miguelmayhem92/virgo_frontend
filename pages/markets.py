@@ -6,7 +6,12 @@ from pathlib import Path
 from utils import get_connection
 from utils import logo, print_object
 
-logo()
+configs = yaml.safe_load(Path('configs.yaml').read_text())
+debug_mode = configs["debug_mode"]
+market_indexes = configs["market_indexes"]
+market_indexes = {k:v for list_item in market_indexes for (k,v) in list_item.items()}
+
+logo(debug_mode)
 
 
 st.markdown("# Markets analysis")
@@ -23,10 +28,6 @@ st.write(
     """
 )
 
-configs = yaml.safe_load(Path('configs.yaml').read_text())
-debug_mode = configs["debug_mode"]
-market_indexes = configs["market_indexes"]
-market_indexes = {k:v for list_item in market_indexes for (k,v) in list_item.items()}
 
 market_plots = configs["market_plots"]
 market_plots = {k:v for list_item in market_plots for (k,v) in list_item.items()}

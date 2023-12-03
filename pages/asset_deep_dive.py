@@ -10,7 +10,11 @@ import pandas as pd
 
 from utils import logo, print_object
 
-logo()
+configs = yaml.safe_load(Path('configs.yaml').read_text())
+debug_mode = configs["debug_mode"]
+asset_plots = configs["asset_plots"]
+
+logo(debug_mode)
 
 st.markdown("# Asset deep-dive")
 
@@ -26,12 +30,7 @@ st.write(
     """
 )
 
-configs = yaml.safe_load(Path('configs.yaml').read_text())
-debug_mode = configs["debug_mode"]
-asset_plots = configs["asset_plots"]
-
 asset_plots = {k:v for list_item in asset_plots for (k,v) in list_item.items()}
-
 symbol_name = st.text_input('Asset symbol', 'PEP')
 
 asset_plots_ = list(asset_plots.keys())

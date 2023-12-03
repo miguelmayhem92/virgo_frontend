@@ -6,8 +6,12 @@ from pathlib import Path
 from utils import get_connection
 from utils import logo
 
-logo()
 
+configs = yaml.safe_load(Path('configs.yaml').read_text())
+debug_mode = configs["debug_mode"]
+multi_symbols = configs["multi_symbols"]
+
+logo(debug_mode)
 
 st.markdown("# Multiple assets")
 
@@ -23,11 +27,6 @@ st.write(
     """
 )
 
-
-
-configs = yaml.safe_load(Path('configs.yaml').read_text())
-debug_mode = configs["debug_mode"]
-multi_symbols = configs["multi_symbols"]
 
 multi_symbol_selection = st.selectbox(
     'select one option',

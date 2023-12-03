@@ -7,7 +7,6 @@ from streamlit_extras.app_logo import add_logo
 import plotly
 import json
 
-
 def get_connection():
     try:
         conn = st.connection('s3', type=FilesConnection)
@@ -29,8 +28,11 @@ def s3_image_reader(bucket,key):
 from streamlit_extras.app_logo import add_logo
 
 
-def logo():
-    add_logo(".\images\log_white.png", height=150)
+def logo(debug_mode):
+    if debug_mode:
+        add_logo(".\images\log_white.png", height=150)
+    else:
+        add_logo("log_white.png", height=150)
 
 
 def print_object(name, type, symbol_name, debug_mode = True, local_storage =True, conn = False):
