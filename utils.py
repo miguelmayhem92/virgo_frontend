@@ -30,7 +30,7 @@ from streamlit_extras.app_logo import add_logo
 
 
 def logo():
-    add_logo("images\log_white.png", height=150)
+    add_logo(".\images\log_white.png", height=150)
 
 
 def print_object(name, type, symbol_name, debug_mode = True, local_storage =True, conn = False):
