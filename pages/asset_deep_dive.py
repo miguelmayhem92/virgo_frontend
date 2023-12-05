@@ -14,6 +14,7 @@ configs = yaml.safe_load(Path('configs.yaml').read_text())
 debug_mode = configs["debug_mode"]
 asset_plots = configs["asset_plots"]
 
+st.set_page_config(layout="wide")
 logo(debug_mode)
 
 st.markdown("# Asset deep-dive")

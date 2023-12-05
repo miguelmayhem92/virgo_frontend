@@ -11,6 +11,7 @@ debug_mode = configs["debug_mode"]
 market_indexes = configs["market_indexes"]
 market_indexes = {k:v for list_item in market_indexes for (k,v) in list_item.items()}
 
+st.set_page_config(layout="wide")
 logo(debug_mode)
 
 

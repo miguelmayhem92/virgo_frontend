@@ -6,6 +6,8 @@ from pathlib import Path
 configs = yaml.safe_load(Path('configs.yaml').read_text())
 debug_mode = configs["debug_mode"]
 
+
+st.set_page_config(layout="wide")
 logo(debug_mode)
 
 st.write("# Welcome to Virgo! 📈")
