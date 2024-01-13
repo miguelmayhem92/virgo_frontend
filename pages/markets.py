@@ -6,6 +6,8 @@ from pathlib import Path
 from utils import get_connection
 from utils import logo, print_object
 
+import time
+
 configs = yaml.safe_load(Path('configs.yaml').read_text())
 debug_mode = configs["debug_mode"]
 market_indexes = configs["market_indexes"]
@@ -49,21 +51,25 @@ options = st.multiselect(
 tab_overview, = st.tabs(['overview'])
 index_symbol = market_indexes[index]
 
-if st.button('Launch'):
-    if debug_mode:
-        local_storage = configs["local_tmps_market_research"]
-        conn = False
-    else:
-        conn = get_connection()
-        local_storage = False
-        
-    with tab_overview:
-        for plot_name in options:
-            object = market_plots[plot_name]
-            name = object['name']
-            type_ = object['data_type']
+# with st.spinner('Wait for it...'):
+# st.success('Done!')
 
-            print_object(name, type_, index_symbol, debug_mode, local_storage, conn)
+if st.button('Launch'):
+    with st.spinner('.......................... Now loading ..........................'):
+        time.sleep(2)
+        if debug_mode:
+            local_storage = configs["local_tmps_market_research"]
+            conn = False
+        else:
+            conn = get_connection()
+            local_storage = False
             
-    
+        with tab_overview:
+            for plot_name in options:
+                object = market_plots[plot_name]
+                name = object['name']
+                type_ = object['data_type']
+
+                print_object(name, type_, index_symbol, debug_mode, local_storage, conn)
+        
 st.button("Re-run")

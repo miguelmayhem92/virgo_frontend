@@ -42,9 +42,11 @@ asset_plots:
       name: "ts_hmm.json"
       data_type : "plot"
 signals:
-  - "RSI"
-  - "rel_MA_spread"
-  - "pair_z_score"
+  - "RSI": "RSI"
+  - "rel_MA_spread" : "Moving Averages"
+  - "pair_z_score": "Pairs"
+
+
 local_tmps: "C:/Users/Miguel/virgo_api/research_env/tmp_plots"
 local_tmps_market_research: "C:/Users/Miguel/virgo_api/research_env/tmp_plots/tmp_market"  
 local_tmps_asset_research: "C:/Users/Miguel/virgo_api/research_env/tmp_plots/tmp_asset"  

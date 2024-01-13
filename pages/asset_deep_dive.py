@@ -8,6 +8,7 @@ from PIL import Image
 import datetime
 import pandas as pd
 import boto3
+import time 
 
 from utils import logo, print_object
 
@@ -45,106 +46,111 @@ options = st.multiselect(
     asset_plots_[0:3]
 )
 
-signals = configs['signals']
+signals_dict = configs['signals']
+signals_map = {k:v for list_item in signals_dict for (k,v) in list_item.items()}
+signals = list(signals_map.keys())
 
 tab_overview, tab_signal, tab_market = st.tabs(['overview', 'signal back-test', 'market risk'])
 
 if st.button('Launch'):
-    print(f"launching: {symbol_name}")
-    if debug_mode:
-        local_storage = False
-        conn = False
-        streamlit_conn = False
-    else:
-        conn = get_connection()
-        local_storage = False
-        streamlit_conn = True
+    with st.spinner('.......................... Now loading ..........................'):
+        time.sleep(2)
 
-    def reading_last_execution():
-        name = "market_message.json" 
-        session = boto3.Session(
-                            aws_access_key_id=st.secrets['AWS_ACCESS_KEY_ID'],
-                            aws_secret_access_key=st.secrets['AWS_SECRET_ACCESS_KEY'])
-        s3_resource = session.resource('s3')
-        bucket = s3_resource.Bucket('virgo-data')
-        image = bucket.Object(f"market_plots/{symbol_name}/{name}")
-        jsonfile = image.get().get('Body').read().decode()
-        market_message = json.loads(jsonfile)
-        aws_report_date = market_message['report_date']
-        return aws_report_date
-    
-    def asset_lambda_execution(symbol_name):
-        payload = {"asset": symbol_name}
-        execute_asset_lambda(payload)
+        if debug_mode:
+            local_storage = False
+            conn = False
+            streamlit_conn = False
+        else:
+            conn = get_connection()
+            local_storage = False
+            streamlit_conn = True
+
+        def reading_last_execution():
+            name = "market_message.json" 
+            session = boto3.Session(
+                                aws_access_key_id=st.secrets['AWS_ACCESS_KEY_ID'],
+                                aws_secret_access_key=st.secrets['AWS_SECRET_ACCESS_KEY'])
+            s3_resource = session.resource('s3')
+            bucket = s3_resource.Bucket('virgo-data')
+            image = bucket.Object(f"market_plots/{symbol_name}/{name}")
+            jsonfile = image.get().get('Body').read().decode()
+            market_message = json.loads(jsonfile)
+            aws_report_date = market_message['report_date']
+            return aws_report_date
         
+        def asset_lambda_execution(symbol_name):
+            payload = {"asset": symbol_name}
+            execute_asset_lambda(payload)
+            
 
-    try:
-        aws_report_date = reading_last_execution()
-    except:
-        asset_lambda_execution(symbol_name)
-        aws_report_date = reading_last_execution()
+        try:
+            aws_report_date = reading_last_execution()
+        except:
+            asset_lambda_execution(symbol_name)
+            aws_report_date = reading_last_execution()
 
-    print(f"execution_date: {execution_date}")
-    print(f"aws_report_date: {aws_report_date}")
-    if execution_date != aws_report_date:
-        ## lambda execution if no available json 
-        asset_lambda_execution(symbol_name)
-        
+        print(f"execution_date: {execution_date}")
+        print(f"aws_report_date: {aws_report_date}")
+        if execution_date != aws_report_date:
+            ## lambda execution if no available json 
+            asset_lambda_execution(symbol_name)
+            
 
-    with tab_overview:
-        for plot_name in options:
-            object = asset_plots[plot_name]
-            name = object['name']
-            type_ = object['data_type']
-            if debug_mode:
-                print_object(name, type_, symbol_name, False, local_storage, conn, streamlit_conn, bucket)
-            else:
-                print_object(name, type_, symbol_name, False, local_storage, conn, streamlit_conn, bucket)
+        with tab_overview:
+            for plot_name in options:
+                object = asset_plots[plot_name]
+                name = object['name']
+                type_ = object['data_type']
+                if debug_mode:
+                    print_object(name, type_, symbol_name, False, local_storage, conn, streamlit_conn, bucket)
+                else:
+                    print_object(name, type_, symbol_name, False, local_storage, conn, streamlit_conn, bucket)
 
-    with tab_signal:
-        for signal in signals:
-            st.write(f"{signal}")
+        with tab_signal:
+            for signal in signals:
+                maped_signal = signals         
+                st.subheader(f"{signals_map[signal]} - analysis and backtest", divider='rainbow')
+                try:
+                    name = f'signals_strategy_distribution_{signal}.png'
+                    fig = s3_image_reader(bucket = "virgo-data",key = f"market_plots/{symbol_name}/{name}")
+                    st.image(fig)
+                except:
+                    st.write("no plot available :(")
+                try:
+                    name = str(f'signals_strategy_return_{signal}.json' )
+
+                    if debug_mode:
+                        print_object(name, "message", symbol_name, False, local_storage, conn, streamlit_conn, bucket)
+                    else:
+                        print_object(name, "message", symbol_name, False, local_storage, conn, streamlit_conn, bucket)
+
+                except:
+                    st.write("no plot available :(")
+                try:
+                    name = f'signals_strategy_return_{signal}.png'
+                    fig = s3_image_reader(bucket = "virgo-data",key = f"market_plots/{symbol_name}/{name}")
+                    st.image(fig)
+                except:
+                    st.write("no plot available :(")
+
+        with tab_market:
+            st.write(f"best fit market index")
             try:
-                name = f'signals_strategy_distribution_{signal}.png'
-                fig = s3_image_reader(bucket = "virgo-data",key = f"market_plots/{symbol_name}/{name}")
-                st.image(fig)
-            except:
-                st.write("no plot available :(")
-            try:
-                name = str(f'signals_strategy_return_{signal}.json' )
+                name = 'market_best_fit.csv'
 
                 if debug_mode:
-                    print_object(name, "message", symbol_name, False, local_storage, conn, streamlit_conn, bucket)
+                    print_object(name, "csv", symbol_name, False, local_storage, conn, streamlit_conn, bucket)
                 else:
-                    print_object(name, "message", symbol_name, False, local_storage, conn, streamlit_conn, bucket)
+                    print_object(name, "csv", symbol_name, False, local_storage, conn, streamlit_conn, bucket)
 
             except:
                 st.write("no plot available :(")
             try:
-                name = f'signals_strategy_return_{signal}.png'
+                name = f'market_best_fit.png' 
                 fig = s3_image_reader(bucket = "virgo-data",key = f"market_plots/{symbol_name}/{name}")
                 st.image(fig)
             except:
                 st.write("no plot available :(")
-
-    with tab_market:
-        st.write(f"best fit market index")
-        try:
-            name = 'market_best_fit.csv'
-
-            if debug_mode:
-                print_object(name, "csv", symbol_name, False, local_storage, conn, streamlit_conn, bucket)
-            else:
-                print_object(name, "csv", symbol_name, False, local_storage, conn, streamlit_conn, bucket)
-
-        except:
-            st.write("no plot available :(")
-        try:
-            name = f'market_best_fit.png' 
-            fig = s3_image_reader(bucket = "virgo-data",key = f"market_plots/{symbol_name}/{name}")
-            st.image(fig)
-        except:
-            st.write("no plot available :(")
 
 st.button("Re-run")
 

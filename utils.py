@@ -37,17 +37,16 @@ def logo(debug_mode):
         add_logo("https://raw.githubusercontent.com/miguelmayhem92/virgo_frontend/main/images/log_white.png", height=150)
 
 def execute_asset_lambda(payload):
-    url = st.secrets['deep_dive_asset_api_url']
-    headers = {'X-API-Key':st.secrets['deep_dive_asset_api_key']}
-    response = requests.post(url, json  = payload, headers=headers)
-    result = json.loads(response.text)
-    if result["body"] == "success lambda execution":
-        print(result["body"])
-    else:
-        raise Exception('Error with lambda')
+    try:
+        url = st.secrets['deep_dive_asset_api_url']
+        headers = {'X-API-Key':st.secrets['deep_dive_asset_api_key']}
+        response = requests.post(url, json  = payload, headers=headers)
+        result = json.loads(response.text)
+        if result["body"] == "success lambda execution":
+            print(result["body"])
+    except:
+        st.error('error with lambda execution', icon="🚨")
     
-
-
 def print_object(name, type, symbol_name, debug_mode = True, local_storage =True, conn = False, streamlit_conn = True, bucket = False):
 
     if type == 'plot':

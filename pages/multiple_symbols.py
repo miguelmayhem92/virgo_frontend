@@ -5,7 +5,7 @@ import yaml
 from pathlib import Path
 from utils import get_connection
 from utils import logo
-
+import time
 
 configs = yaml.safe_load(Path('configs.yaml').read_text())
 debug_mode = configs["debug_mode"]
@@ -37,25 +37,28 @@ multi_symbol_selection = st.selectbox(
 tabs = st.tabs(['dashboard'])
 
 if st.button('Launch'):
-    if debug_mode:
-        local_storage = configs["local_tmps"]
-        for tab in tabs:
-            with tab:
-                try:
-                    fig = plotly.io.read_json(f'{local_storage}/{multi_symbol_selection}.json')
-                    st.plotly_chart(fig, theme="streamlit", use_container_width=True)
-                except:
-                    st.write("no plot available :(")
-    else:
-        for tab in tabs:
-            with tab:
-                conn = get_connection()
-                try:
-                    jsonfile = conn.read(f"virgo-data/multi_dashboards/{multi_symbol_selection}.json", input_format="json", ttl=30)
-                    json_dump = json.dumps(jsonfile)
-                    fig = plotly.io.from_json(json_dump)
-                    st.plotly_chart(fig, theme="streamlit", use_container_width=True)
-                except:
-                    st.write("no plot available :(")
+    with st.spinner('.......................... Now loading ..........................'):
+        time.sleep(2)
+
+        if debug_mode:
+            local_storage = configs["local_tmps"]
+            for tab in tabs:
+                with tab:
+                    try:
+                        fig = plotly.io.read_json(f'{local_storage}/{multi_symbol_selection}.json')
+                        st.plotly_chart(fig, theme="streamlit", use_container_width=True)
+                    except:
+                        st.write("no plot available :(")
+        else:
+            for tab in tabs:
+                with tab:
+                    conn = get_connection()
+                    try:
+                        jsonfile = conn.read(f"virgo-data/multi_dashboards/{multi_symbol_selection}.json", input_format="json", ttl=30)
+                        json_dump = json.dumps(jsonfile)
+                        fig = plotly.io.from_json(json_dump)
+                        st.plotly_chart(fig, theme="streamlit", use_container_width=True)
+                    except:
+                        st.write("no plot available :(")
 
 st.button("Re-run")
