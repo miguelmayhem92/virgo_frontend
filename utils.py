@@ -189,10 +189,14 @@ def aws_print_object(file_name: str, type: str, conn = False, streamlit_conn:boo
                 jsonfile = image.get().get('Body').read().decode()
                 market_message = json.loads(jsonfile)
 
-            st.write(f"status:")
+            long_message = list()
             for key in market_message.keys():
-                message = market_message.get(key)
-                st.write(f"{message}")
+                message = " * " + str(market_message.get(key))
+                long_message.append(message)
+            long_message = " \n ".join(long_message)
+
+            st.markdown("###### results:")
+            st.markdown(long_message)
 
         except:
             st.write("no text was recorded :(")

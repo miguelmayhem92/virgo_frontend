@@ -1,4 +1,4 @@
-debug_mode: True
+debug_mode: False
 market_indexes:
   - "S&P 500" : "^GSPC"
   - "Dow Jones" : "^DJI"
@@ -49,4 +49,8 @@ signals:
 
 local_tmps: "C:/Users/Miguel/virgo_api/research_env/tmp_plots"
 local_tmps_market_research: "C:/Users/Miguel/virgo_api/research_env/tmp_plots/tmp_market"  
-local_tmps_asset_research: "C:/Users/Miguel/virgo_api/research_env/tmp_plots/tmp_asset"  
+local_tmps_asset_research: "C:/Users/Miguel/virgo_api/research_env/tmp_plots/tmp_asset" 
+
+models:
+  - "sirius":
+      description: "Sirius is a ML model trained using a sample of 40 symbols. It is a generic ML model to detect positives and negatives edges returns in the coming 30  days and the result is given as a binary classfiication in a two output model"

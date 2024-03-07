@@ -8,7 +8,7 @@ from utils import logo, execute_edgemodel_lambda, reading_last_execution, s3_ima
 
 configs = yaml.safe_load(Path('configs.yaml').read_text())
 debug_mode = configs["debug_mode"]
-asset_plots = configs["asset_plots"]
+models_dict = configs["models"]
 execution_date = datetime.datetime.today().strftime('%Y-%m-%d')
 execution_date = f"report date: {execution_date}"
 bucket = 'virgo-data'
@@ -53,6 +53,8 @@ feature_config_generic = {
 }
 
 bucket = 'virgo-data'
+models_descriptions = {k:v for list_item in models_dict for (k,v) in list_item.items()}
+
 
 if st.button('Launch'):
     with st.spinner('.......................... Now loading ..........................'):
@@ -62,6 +64,9 @@ if st.button('Launch'):
             st.plotly_chart(fig, use_container_width=True)
 
         with tab_edge:
+
+            st.subheader(f"Sirius edge model - analysis and backtest", divider='rainbow')
+            st.markdown(models_descriptions['sirius']['description'])
 
             conn = False
             streamlit_conn = False
@@ -86,8 +91,6 @@ if st.button('Launch'):
                 ## lambda execution if no available json 
                 edgemodel_lambda_execution(symbol_name)
             
-            st.subheader(f"Sirius edge model - analysis and backtest", divider='rainbow')
-
             try:
                 name = f'signals_strategy_distribution_sirius_edge.png'
                 fig = s3_image_reader(bucket = "virgo-data",key = f"edge_models/sirius/{symbol_name}/{name}")
