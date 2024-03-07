@@ -4,7 +4,7 @@ from pathlib import Path
 import datetime
 import boto3
 from virgo_modules.src.re_utils import produce_simple_ts_from_model
-from utils import logo, execute_edgemodel_lambda, reading_last_execution, s3_image_reader, aws_print_object, get_connection
+from utils import logo, execute_edgemodel_lambda, reading_last_execution, s3_image_reader, aws_print_object, get_connection, call_edge_json
 
 configs = yaml.safe_load(Path('configs.yaml').read_text())
 debug_mode = configs["debug_mode"]
@@ -99,7 +99,12 @@ if st.button('Launch'):
                 st.write("no plot available :(")
 
             try:
-                name = str(f'signals_strategy_return_sirius_edge.json' )
+                call_edge_json(file_name = 'current_edge.json', conn = conn, streamlit_conn = streamlit_conn, bucket = bucket, folder_path = f'edge_models/sirius/{symbol_name}/')
+            except:
+                st.write("no message available :(")
+                
+            try:
+                name = str(f'signals_strategy_return_sirius_edge.json')
                 aws_print_object(file_name = name, type = 'message', streamlit_conn = streamlit_conn, conn = conn, bucket = bucket, folder_path = f'edge_models/sirius/{symbol_name}/')
             except:
                 st.write("no plot available :(")
