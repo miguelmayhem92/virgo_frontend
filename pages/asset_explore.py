@@ -4,7 +4,7 @@ from pathlib import Path
 import datetime
 import boto3
 from virgo_modules.src.re_utils import produce_simple_ts_from_model
-from utils import logo
+from utils import logo, execute_edgemodel_lambda, reading_last_execution, s3_image_reader, aws_print_object, get_connection
 
 configs = yaml.safe_load(Path('configs.yaml').read_text())
 debug_mode = configs["debug_mode"]
@@ -52,7 +52,7 @@ feature_config_generic = {
     'rel_MA_spread':{'method': 'relative_spread_MA', 'config_params': {'ma1': ma1_window, 'ma2': ma2_window, 'threshold': threshold}}
 }
 
-
+bucket = 'virgo-data'
 
 if st.button('Launch'):
     with st.spinner('.......................... Now loading ..........................'):
@@ -60,3 +60,52 @@ if st.button('Launch'):
 
             fig = produce_simple_ts_from_model(symbol_name, configs = feature_config_generic)
             st.plotly_chart(fig, use_container_width=True)
+
+        with tab_edge:
+
+            conn = False
+            streamlit_conn = False
+            if not debug_mode:
+                conn = get_connection()
+                streamlit_conn = True
+
+            def edgemodel_lambda_execution(symbol_name):
+                payload = {"asset": symbol_name}
+                execute_edgemodel_lambda(payload)
+
+            try:
+                aws_report_date = reading_last_execution('current_edge.json', f'edge_models/sirius/{symbol_name}/', 'ExecutionDate')
+            except:
+                edgemodel_lambda_execution(symbol_name)
+                aws_report_date = reading_last_execution('current_edge.json', f'edge_models/sirius/{symbol_name}/', 'ExecutionDate')
+
+            print(f"execution_date: {execution_date}")
+            print(f"aws_report_date: {aws_report_date}")
+
+            if execution_date != aws_report_date:
+                ## lambda execution if no available json 
+                edgemodel_lambda_execution(symbol_name)
+            
+            st.subheader(f"Sirius edge model - analysis and backtest", divider='rainbow')
+
+            try:
+                name = f'signals_strategy_distribution_sirius_edge.png'
+                fig = s3_image_reader(bucket = "virgo-data",key = f"edge_models/sirius/{symbol_name}/{name}")
+                st.image(fig)
+            except:
+                st.write("no plot available :(")
+
+            try:
+                name = str(f'signals_strategy_return_sirius_edge.json' )
+                aws_print_object(file_name = name, type = 'message', streamlit_conn = streamlit_conn, conn = conn, bucket = bucket, folder_path = f'edge_models/sirius/{symbol_name}/')
+            except:
+                st.write("no plot available :(")
+
+            try:
+                name = f'signals_strategy_return_sirius_edge.png'
+                fig = s3_image_reader(bucket = "virgo-data",key = f"edge_models/sirius/{symbol_name}/{name}")
+                st.image(fig)
+            except:
+                st.write("no plot available :(")
+
+st.button("Re-run")
