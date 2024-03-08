@@ -99,7 +99,8 @@ if st.button('Launch'):
                 st.write("no plot available :(")
 
             try:
-                call_edge_json(file_name = 'current_edge.json', conn = conn, streamlit_conn = streamlit_conn, bucket = bucket, folder_path = f'edge_models/sirius/{symbol_name}/')
+                call_edge_json(file_name = 'current_edge.json', conn = conn, dict_keys = ['probability go down','probability go up'],
+                            streamlit_conn = streamlit_conn, bucket = bucket, folder_path = f'edge_models/sirius/{symbol_name}/')
             except:
                 st.write("no message available :(")
                 

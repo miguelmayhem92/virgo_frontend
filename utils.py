@@ -218,28 +218,24 @@ def aws_print_object(file_name: str, type: str, conn = False, streamlit_conn:boo
         except:
             st.write("no csv was recorded :(")
 
-def call_edge_json(file_name: str, conn = False, streamlit_conn:bool = True, bucket:str = False, folder_path:str = False, format_values_to_perc = True):
+def call_edge_json(file_name: str, conn = False,dict_keys=list(), streamlit_conn:bool = True, bucket:str = False, folder_path:str = False, format_values_to_perc = True):
 
-    try:
-        if streamlit_conn:
-            edges_results = conn.read(f"{bucket}/{folder_path}{file_name}", input_format="json", ttl=30)
-        else:
-            session = boto3.Session(
-                aws_access_key_id=st.secrets['AWS_ACCESS_KEY_ID'],
-                aws_secret_access_key=st.secrets['AWS_SECRET_ACCESS_KEY'])
-            s3_resource = session.resource('s3')
-            bucket = s3_resource.Bucket(bucket)
-            image = bucket.Object(f"{folder_path}{file_name}")
-            jsonfile = image.get().get('Body').read().decode()
-            edges_results = json.loads(jsonfile)
+    if streamlit_conn:
+        edges_results = conn.read(f"{bucket}/{folder_path}{file_name}", input_format="json", ttl=30)
+    else:
+        session = boto3.Session(
+            aws_access_key_id=st.secrets['AWS_ACCESS_KEY_ID'],
+            aws_secret_access_key=st.secrets['AWS_SECRET_ACCESS_KEY'])
+        s3_resource = session.resource('s3')
+        bucket = s3_resource.Bucket(bucket)
+        image = bucket.Object(f"{folder_path}{file_name}")
+        jsonfile = image.get().get('Body').read().decode()
+        edges_results = json.loads(jsonfile)
 
-        if format_values_to_perc:
-            
-            for k,v in edges_results.items():
-                edges_results[k] = str(round(v*100,2))+'%'
+    if format_values_to_perc:
+        for k in dict_keys:
+            edges_results[k] = str(round(edges_results[k]*100,2))+'%'
 
-        st.markdown("###### current edges:")
-        st.write(edges_results)
-
-    except:
-        st.write("no text was recorded :(")
+    result_to_print = {k:v for k,v in edges_results.items() if k in dict_keys}
+    st.markdown("###### current edges:")
+    st.write(result_to_print)
