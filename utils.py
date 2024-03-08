@@ -218,11 +218,11 @@ def aws_print_object(file_name: str, type: str, conn = False, streamlit_conn:boo
         except:
             st.write("no csv was recorded :(")
 
-def call_edge_json(file_name: str, conn = False, streamlit_conn:bool = True, bucket:str = False, folder_path:str = False):
+def call_edge_json(file_name: str, conn = False, streamlit_conn:bool = True, bucket:str = False, folder_path:str = False, format_values_to_perc = True):
 
     try:
         if streamlit_conn:
-            market_message = conn.read(f"{bucket}/{folder_path}{file_name}", input_format="json", ttl=30)
+            edges_results = conn.read(f"{bucket}/{folder_path}{file_name}", input_format="json", ttl=30)
         else:
             session = boto3.Session(
                 aws_access_key_id=st.secrets['AWS_ACCESS_KEY_ID'],
@@ -231,10 +231,12 @@ def call_edge_json(file_name: str, conn = False, streamlit_conn:bool = True, buc
             bucket = s3_resource.Bucket(bucket)
             image = bucket.Object(f"{folder_path}{file_name}")
             jsonfile = image.get().get('Body').read().decode()
-            market_message = json.loads(jsonfile)
+            edges_results = json.loads(jsonfile)
 
-        edges_results = {'probability go down':str(round(market_message['proba_target_down']*100,2))+'%',
-        'probability go up':str(round(market_message['proba_target_up']*100,2))+'%'}
+        if format_values_to_perc:
+            
+            for k,v in edges_results.items():
+                edges_results[k] = str(round(v*100,2))+'%'
 
         st.markdown("###### current edges:")
         st.write(edges_results)
