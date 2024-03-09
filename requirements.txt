@@ -11,3 +11,4 @@ pandas==1.5.3
 virgo-modules==0.0.68
 pykalman
 boto3
+validators
