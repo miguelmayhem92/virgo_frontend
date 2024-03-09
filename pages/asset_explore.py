@@ -3,6 +3,7 @@ import yaml
 from pathlib import Path
 import datetime
 import boto3
+from io import BytesIO
 from virgo_modules.src.re_utils import produce_simple_ts_from_model
 from virgo_modules.src.ticketer_source import signal_analyser_object
 from utils import logo, execute_edgemodel_lambda, reading_last_execution, s3_image_reader, aws_print_object, get_connection, call_edge_json
@@ -81,7 +82,9 @@ if st.button('Launch'):
                 try:
                     fig2, json_message = sao.create_backtest_signal(days_strategy = 30, test_size = 250, feature_name = signal)
                     st.write(json_message)
-                    st.pyplot(fig2)
+                    buf = BytesIO()
+                    fig2.savefig(buf, format="png")
+                    st.image(buf)
                 except:
                     st.write("no plot available :(")
 
