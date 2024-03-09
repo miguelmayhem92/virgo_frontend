@@ -1,4 +1,4 @@
-debug_mode: False
+debug_mode: True
 market_indexes:
   - "S&P 500" : "^GSPC"
   - "Dow Jones" : "^DJI"

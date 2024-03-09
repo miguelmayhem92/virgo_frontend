@@ -4,6 +4,7 @@ from pathlib import Path
 import datetime
 import boto3
 from virgo_modules.src.re_utils import produce_simple_ts_from_model
+from virgo_modules.src.ticketer_source import signal_analyser_object
 from utils import logo, execute_edgemodel_lambda, reading_last_execution, s3_image_reader, aws_print_object, get_connection, call_edge_json
 
 configs = yaml.safe_load(Path('configs.yaml').read_text())
@@ -44,24 +45,45 @@ ma1_window = st.slider('MA short term',0, 50, 5)
 ma2_window = st.slider('MA long term',0, 50, 15)
 threshold = st.slider('Z threshold',0.0, 3.0, 2.0, 0.2)
 
-tab_overview, tab_edge = st.tabs(['overview', 'edge analysis'])
+tab_overview,tab_backtest, tab_edge = st.tabs(['overview', 'backtest signal', 'edge analysis'])
 
 feature_config_generic = {
     'ROC':{'method': 'roc_feature', 'config_params': {'threshold': threshold, 'window': roc_window}},
     'RSI':{'method': 'rsi_feature_improved', 'config_params': {'threshold': threshold, 'window': rsi_window}},
     'rel_MA_spread':{'method': 'relative_spread_MA', 'config_params': {'ma1': ma1_window, 'ma2': ma2_window, 'threshold': threshold}}
 }
+signals_map = {
+    'ROC':'ROC',
+    'RSI':'RSI',
+    'rel_MA_spread': "Moving Averages"
+}
 
 bucket = 'virgo-data'
 models_descriptions = {k:v for list_item in models_dict for (k,v) in list_item.items()}
-
+signals = list(feature_config_generic.keys())
 
 if st.button('Launch'):
     with st.spinner('.......................... Now loading ..........................'):
         with tab_overview:
 
-            fig = produce_simple_ts_from_model(symbol_name, configs = feature_config_generic)
+            fig,df = produce_simple_ts_from_model(symbol_name, configs = feature_config_generic)
             st.plotly_chart(fig, use_container_width=True)
+
+        with tab_backtest:
+            sao = signal_analyser_object(df, symbol_name, save_path = False, save_aws = False, show_plot = False, aws_credentials = False, return_fig = True)
+            for signal in signals:      
+                st.subheader(f"{signals_map[signal]} - analysis and backtest", divider='rainbow')
+                # try:
+                fig = sao.signal_analyser(test_size = 250, feature_name = signal, days_list = [7,15,30], threshold = 0.05,verbose = False)
+                st.pyplot(fig)
+                # except:
+                #     st.write("no plot available :(")
+                try:
+                    fig2, json_message = sao.create_backtest_signal(days_strategy = 30, test_size = 250, feature_name = signal)
+                    st.write(json_message)
+                    st.pyplot(fig2)
+                except:
+                    st.write("no plot available :(")
 
         with tab_edge:
 
