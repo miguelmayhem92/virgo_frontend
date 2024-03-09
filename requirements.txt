@@ -1,5 +1,5 @@
-streamlit
-streamlit-extras
+streamlit==1.28.1
+streamlit-extras==0.3.5
 s3fs
 pyyaml
 st-files-connection
