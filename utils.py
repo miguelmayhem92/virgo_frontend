@@ -8,6 +8,7 @@ import plotly
 import json
 import pandas as pd
 import requests
+import numpy as np
 
 def get_connection():
     try:
@@ -27,8 +28,6 @@ def s3_image_reader(bucket,key):
     img_data = image.get().get('Body').read()
 
     return Image.open(io.BytesIO(img_data))
-from streamlit_extras.app_logo import add_logo
-
 
 def logo(debug_mode):
     if debug_mode:
@@ -239,3 +238,38 @@ def call_edge_json(file_name: str, conn = False,dict_keys=list(), streamlit_conn
     result_to_print = {k:v for k,v in edges_results.items() if k in dict_keys}
     st.markdown("###### current edges:")
     st.write(result_to_print)
+
+def dowload_any_object(file_name, folder, file_type, bucket):
+    """
+    file_name 
+    folder_path: eg. path/to/folder/
+    file_type: csv, txt
+    bucket: bucket name
+    """
+
+    session = boto3.Session(
+        aws_access_key_id=st.secrets['AWS_ACCESS_KEY_ID'],
+        aws_secret_access_key=st.secrets['AWS_SECRET_ACCESS_KEY'])
+    s3_resource = session.resource('s3')
+    bucket = s3_resource.Bucket(bucket)
+    image = bucket.Object(f"{folder}{file_name}")
+    jsonfile = image.get().get('Body').read()
+
+    if file_type == 'csv':
+        df = pd.read_csv(io.BytesIO(jsonfile), sep = ';')
+
+    elif file_type == 'txt':  
+        elements = jsonfile.decode("utf-8").split('\n')
+        elements = [e.split(' ') for e in elements]
+        arrays = list()
+        for e in elements:
+            string = ' '.join(e)
+            array = list(np.fromstring(string, sep=' '))
+            arrays.append(array)
+        arrays = [e for e in arrays if len(e) > 0 ]
+        df = np.array(arrays)
+
+    elif file_type == 'json':
+        df = json.loads(jsonfile)
+
+    return df
