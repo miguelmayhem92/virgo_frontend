@@ -12,7 +12,7 @@ configs = yaml.safe_load(Path('configs.yaml').read_text())
 debug_mode = configs["debug_mode"]
 models_dict = configs["models"]
 execution_date = datetime.datetime.today().strftime('%Y-%m-%d')
-execution_date = f"report date: {execution_date}"
+execution_date = f"{execution_date}"
 bucket = 'virgo-data'
 
 st.set_page_config(layout="wide")
