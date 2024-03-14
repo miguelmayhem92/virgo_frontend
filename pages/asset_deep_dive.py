@@ -28,12 +28,14 @@ st.markdown("# Asset deep-dive")
 st.write(
     """
     Here you will find analysis of the historical asset closing prices
+    
     In this page you have thre tabs:
     - **overview** here you have a global view of the signals and hidden markov states of chosen asset
     - **signal back-test** explore the statitical properties of the signals
-    - **market risk** get a quick understanding of the market exposure risk of the asset in the current time and historically 
+    - **market risk** get a quick understanding of the market exposure risk of the asset in the current time and historically (soon)
 
     Note that the plots can take about 5 seconds to load the data
+    some examples: AAPL(Apple), AMZN (Amazon), UBI.PA (Ubisoft), etc
     """
 )
 

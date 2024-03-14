@@ -23,8 +23,10 @@ st.markdown("# Explore assets")
 st.write(
     """
     Here you will find analysis of the historical asset closing prices
+    
     In this page you have thre tabs:
     - **overview** here you have a global view of the signals and hidden markov states of chosen asset
+    - **backtest** explore the statitical properties of the signals
     - **edges** explore current edges using machine learning models
 
     Note that the plots can take about 5 seconds to load the data

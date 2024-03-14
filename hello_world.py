@@ -2,9 +2,20 @@ import streamlit as st
 from utils import logo
 import yaml
 from pathlib import Path
+from st_pages import Page, show_pages
 
 configs = yaml.safe_load(Path('configs.yaml').read_text())
 debug_mode = configs["debug_mode"]
+
+show_pages(
+    [
+        Page("hello_world.py", "Home", "🏠"),
+        Page("pages/asset_explore.py", "Explore Assets"),
+        Page("pages/asset_deep_dive.py", "Deep Dive"),
+        Page("pages/markets.py", "Markets"),
+        Page("pages/multiple_symbols.py", "Recomendations")
+    ]
+)
 
 
 st.set_page_config(layout="wide")
@@ -25,9 +36,10 @@ st.markdown(
         - or follow unrealistic strategies
         - lack of backtested strategies (at least to built some confidence and strategy understanding)
     ### The functionalities:
-    - **Asset deep dive** explore signals, trends, and other statical prperties of your favorite assets (Markov hidden models, strategy backtest, market risk)
+    - **Explore Asset** exaplore any asset and experiment with signals, get backtested results and edges using ML models
+    - **Deep Dive** explore signals, trends, and other statical prperties of your favorite assets (Markov hidden models, strategy backtest, market risk)
     - **Markets** get a view of the most important market indexes. Also get some analysis thanks to signals, market forecasting and Markov hidden states
-    - **multiple symbols** explore in a dashboard possible investment candidates thanks to signal processing
+    - **Recomendations** explore in a dashboard possible investment candidates thanks to signal processing
 
 """
 )
