@@ -47,19 +47,35 @@ the dependencies are:
 
 ## Pages
 
-<b> Hello World
+##### Hello World
 
 home page and main  page to run the app
 
-<b> pages/asset deep dive
+##### pages/asset deep dive
 
-<b> pages/asset explore
+Analysis of monitoring assets, here the repo: https://github.com/miguelmayhem92/virgo_asset_lambda
 
-<b> pages/markets
+##### pages/asset explore
 
-<b> pages/multiple symbols
+Global signal plots and edge ML model, here the repo: https://github.com/miguelmayhem92/virgo_edge_models_lambda
+
+##### pages/markets
+
+Index monitoring and forecasting model, here the repos: https://github.com/miguelmayhem92/virgo_marketindex_lambda and https://github.com/miguelmayhem92/virgo_api_market_forecast_lambda
+
+##### pages/multiple symbols
+
+Ranking and recomendations, Here the repo: https://github.com/miguelmayhem92/virgo_rankings_lambda
 
 ## Utils
 
+the utils folder have code snippets:
+- reading objects from s3
+- call endpoints
+- streamlit objects
 
 ## Testing and running
+
+```
+streamlit run hello_world.py
+```
