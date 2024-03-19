@@ -76,6 +76,9 @@ the utils folder have code snippets:
 
 ## Testing and running
 
+When runing in local, update the configs.yaml file and set debug mode to True.
+To run on local, run the following code in the terminal:
+
 ```
 streamlit run hello_world.py
 ```
