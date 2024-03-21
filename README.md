@@ -82,3 +82,7 @@ To run on local, run the following code in the terminal:
 ```
 streamlit run hello_world.py
 ```
+
+## References
+
+general virgo project repo: https://github.com/miguelmayhem92/virgo_api
