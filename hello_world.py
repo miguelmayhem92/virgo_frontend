@@ -19,7 +19,7 @@ show_pages(
 
 
 st.set_page_config(layout="wide")
-logo2(debug_mode)
+logo(debug_mode)
 
 st.write("# Welcome to Virgo! 📈")
 
