@@ -31,9 +31,55 @@ def s3_image_reader(bucket,key):
 
 def logo(debug_mode):
     if debug_mode:
-        add_logo(".\images\log_white.png", height=150)
+        add_logo(".\images\Virgo_blanco_resize.png", height=150)
     else:
-        add_logo("https://raw.githubusercontent.com/miguelmayhem92/virgo_frontend/main/images/log_white.png", height=150)
+        add_logo("https://raw.githubusercontent.com/miguelmayhem92/virgo_frontend/main/images/Virgo_blanco_resize.png", height=150)
+
+def logo2(debug_mode):
+    if debug_mode:
+        st.markdown(
+            """
+            <style>
+                [data-testid="stSidebarNav"] {
+                    background-image: url(.\images\Virgo_blanco_resize.png);
+                    background-repeat: no-repeat;
+                    padding-top: 120px;
+                    background-position: 20px 20px;
+                }
+                [data-testid="stSidebarNav"]::before {
+                    content: "Statistical arbitrage app";
+                    margin-left: 20px;
+                    margin-top: 20px;
+                    font-size: 20px;
+                    position: relative;
+                    top: 100px;
+                }
+            </style>
+            """,
+            unsafe_allow_html=True,
+        )
+    else:
+         st.markdown(
+            """
+            <style>
+                [data-testid="stSidebarNav"] {
+                    background-image: url(https://raw.githubusercontent.com/miguelmayhem92/virgo_frontend/main/images/Virgo_blanco_resize.png);
+                    background-repeat: no-repeat;
+                    padding-top: 120px;
+                    background-position: 20px 20px;
+                }
+                [data-testid="stSidebarNav"]::before {
+                    content: "Statistical arbitrage app";
+                    margin-left: 20px;
+                    margin-top: 20px;
+                    font-size: 20px;
+                    position: relative;
+                    top: 100px;
+                }
+            </style>
+            """,
+            unsafe_allow_html=True,
+        )
 
 def execute_asset_lambda(payload):
     try:

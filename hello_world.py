@@ -1,5 +1,5 @@
 import streamlit as st
-from utils import logo
+from utils import logo, logo2
 import yaml
 from pathlib import Path
 from st_pages import Page, show_pages
@@ -19,7 +19,7 @@ show_pages(
 
 
 st.set_page_config(layout="wide")
-logo(debug_mode)
+logo2(debug_mode)
 
 st.write("# Welcome to Virgo! 📈")
 
