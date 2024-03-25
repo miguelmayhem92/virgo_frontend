@@ -2,6 +2,7 @@ import streamlit as st
 from utils import logo
 from pathlib import Path
 from st_pages import Page, show_pages
+import yaml
 
 configs = yaml.safe_load(Path('configs.yaml').read_text())
 debug_mode = configs["debug_mode"]
