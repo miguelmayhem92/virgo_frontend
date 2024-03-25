@@ -1,6 +1,5 @@
 import streamlit as st
-from utils import logo, logo2
-import yaml
+from utils import logo
 from pathlib import Path
 from st_pages import Page, show_pages
 
