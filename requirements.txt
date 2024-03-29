@@ -9,7 +9,7 @@ numpy==1.23.5
 pandas==1.5.3
 plotly==5.15.0
 pandas==1.5.3
-virgo-modules==0.0.70
+virgo-modules==0.0.73
 pykalman
 boto3
 validators

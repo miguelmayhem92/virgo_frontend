@@ -45,6 +45,8 @@ signals:
   - "RSI": "RSI"
   - "rel_MA_spread" : "Moving Averages"
   - "pair_z_score": "Pairs"
+  - "ROC": "ROC"
+  - 'STOCHOSC': 'STOCHOSC'
 
 
 local_tmps: "C:/Users/Miguel/virgo_api/research_env/tmp_plots"

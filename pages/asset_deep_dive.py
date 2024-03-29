@@ -49,6 +49,18 @@ options = st.multiselect(
     asset_plots_[0:3]
 )
 
+st.markdown(""" 
+For backtesting:
+""")
+
+high_exit = st.number_input('high exit:', max_value = 10, min_value=0, value= 5)
+low_exit = st.number_input('low exit:', max_value = 10, min_value=0, value= 5)
+
+exit_params = {
+    'high_exit': float(high_exit),
+    'low_exit': -float(low_exit)
+}
+
 signals_dict = configs['signals']
 signals_map = {k:v for list_item in signals_dict for (k,v) in list_item.items()}
 signals = list(signals_map.keys())
@@ -93,7 +105,7 @@ if st.button('Launch'):
             for plot_name in options:
                 
                 if plot_name == "panel signals":
-                    features_ = ['volatility_log_return','z_log_return', 'rel_MA_spread', 'target_mean_dow','pair_z_score','RSI']
+                    features_ = ['volatility_log_return', 'rel_MA_spread', 'target_mean_dow','pair_z_score','RSI','ROC','STOCHOSC']
                     spread_column = 'relative_spread_ma'
                     fig = plotter.plot_asset_signals(features_, spread_column ,date_intervals = False)
                     st.plotly_chart(fig, use_container_width=True)
@@ -114,13 +126,13 @@ if st.button('Launch'):
             sao = signal_analyser_object(data_frame, symbol_name, save_path = False, save_aws = False, show_plot = False, aws_credentials = False, return_fig = True)
             for signal in signals:      
                 st.subheader(f"{signals_map[signal]} - analysis and backtest", divider='rainbow')
-                # try:
-                fig = sao.signal_analyser(test_size = 250, feature_name = signal, days_list = [7,15,30], threshold = 0.05,verbose = False)
-                st.pyplot(fig)
-                # except:
-                #     st.write("no plot available :(")
                 try:
-                    fig2, json_message = sao.create_backtest_signal(days_strategy = 30, test_size = 250, feature_name = signal)
+                    fig = sao.signal_analyser(test_size = 250, feature_name = signal, days_list = [7,15,30], threshold = 0.05,verbose = False)
+                    st.pyplot(fig)
+                except:
+                    st.write("no plot available :(")
+                try:
+                    fig2, json_message = sao.create_backtest_signal(days_strategy = 30, test_size = 250, feature_name = signal, **exit_params)
                     st.write(json_message)
                     buf = BytesIO()
                     fig2.savefig(buf, format="png")
