@@ -5,7 +5,7 @@ from pathlib import Path
 import datetime
 import boto3
 from io import BytesIO
-from virgo_modules.src.re_utils import produce_simple_ts_from_model, edge_probas_lines
+from virgo_modules.src.re_utils import produce_simple_ts_from_model, edge_probas_lines, produce_signals
 from virgo_modules.src.ticketer_source import signal_analyser_object
 from utils import logo, execute_edgemodel_lambda, reading_last_execution, get_connection, call_edge_json, dowload_any_object
 
@@ -128,24 +128,28 @@ if st.button('Launch'):
                     ## lambda execution if no available json 
                     edgemodel_lambda_execution(symbol_name)
                 
-                try:
-                    model_name = 'sirius'
-                    edge_name = 'sirius_edge'
-                    csv_name = f'{model_name}_{symbol_name}_edges.csv'
-                    edge_signals = dowload_any_object(csv_name, f'edge_models/{model_name}/{symbol_name}/', 'csv',bucket)
-                    # edge_signals['Date'] = pd.to_datetime(edge_signals['Date'], format='mixed',utc=True).dt.date
-                    edge_signals['Date'] = pd.to_datetime(edge_signals['Date'])
+                # try:
+                model_name = 'sirius'
+                edge_name = 'sirius_edge'
+                csv_name = f'{model_name}_{symbol_name}_edges.csv'
+                target_variables = ['target_down','target_up']
+                label_prediction = ['proba_'+x for x in target_variables]
+                
+                probas = dowload_any_object(csv_name, f'edge_models/{model_name}/{symbol_name}/', 'csv', bucket)
+                probas['Date'] = pd.to_datetime(probas['Date'])
 
-                    new_signal_list = ['Date','proba_target_down','proba_target_up',f'signal_up_{model_name}_edge',f'acc_up_{model_name}_edge',f'signal_low_{model_name}_edge',f'acc_low_{model_name}_edge']
-                    data_frame = df.merge(edge_signals[new_signal_list], on = 'Date', how = 'left')
+                edge_signals = produce_signals(probas, edge_name, edge_threshold, label_prediction)
 
-                    sao = signal_analyser_object(data_frame, symbol_name, save_path = False, save_aws = False, show_plot = False, aws_credentials = False, return_fig = True)
+                new_signal_list = ['Date','proba_target_down','proba_target_up',f'signal_up_{model_name}_edge',f'acc_up_{model_name}_edge',f'signal_low_{model_name}_edge',f'acc_low_{model_name}_edge']
+                data_frame = df.merge(edge_signals[new_signal_list], on = 'Date', how = 'left')
 
-                    fig = sao.signal_analyser(test_size = 250, feature_name = edge_name, days_list = [7,15,30], threshold = 0.05,verbose = False)
-                    st.pyplot(fig)
+                sao = signal_analyser_object(data_frame, symbol_name, save_path = False, save_aws = False, show_plot = False, aws_credentials = False, return_fig = True)
 
-                except:
-                    st.write("no data available :(")
+                fig = sao.signal_analyser(test_size = 250, feature_name = edge_name, days_list = [7,15,30], threshold = 0.05,verbose = False)
+                st.pyplot(fig)
+
+                # except:
+                #     st.write("no data available :(")
 
                 try:
                     call_edge_json(file_name = 'current_edge.json', conn = conn, dict_keys = ['probability go down','probability go up'],

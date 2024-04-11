@@ -8,7 +8,7 @@ import boto3
 import time 
 from io import BytesIO
 
-from virgo_modules.src.re_utils import produce_plotly_plots, edge_probas_lines
+from virgo_modules.src.re_utils import produce_plotly_plots, edge_probas_lines, produce_signals
 from virgo_modules.src.ticketer_source import signal_analyser_object
 
 from utils import logo, reading_last_execution, dowload_any_object
@@ -185,10 +185,14 @@ if st.button('Launch'):
                     model_name = 'sirius'
                     edge_name = 'sirius_edge'
                     csv_name = f'{model_name}_{symbol_name}_edges.csv'
-                    edge_signals = dowload_any_object(csv_name, f'edge_models/{model_name}/{symbol_name}/', 'csv',bucket)
-                    # edge_signals['Date'] = pd.to_datetime(edge_signals['Date'], format='mixed',utc=True).dt.date
+                    target_variables = ['target_down','target_up']
+                    label_prediction = ['proba_'+x for x in target_variables]
+
                     data_frame['Date'] = pd.to_datetime(data_frame['Date'])
-                    edge_signals['Date'] = pd.to_datetime(edge_signals['Date'])
+
+                    probas = dowload_any_object(csv_name, f'edge_models/{model_name}/{symbol_name}/', 'csv', bucket)
+                    probas['Date'] = pd.to_datetime(probas['Date'])
+                    edge_signals = produce_signals(probas, edge_name, edge_threshold, label_prediction)
 
                     new_signal_list = ['Date','proba_target_down','proba_target_up',f'signal_up_{model_name}_edge',f'acc_up_{model_name}_edge',f'signal_low_{model_name}_edge',f'acc_low_{model_name}_edge']
                     data_frame_edge = data_frame.merge(edge_signals[new_signal_list], on = 'Date', how = 'left')
