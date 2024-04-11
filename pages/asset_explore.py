@@ -7,7 +7,7 @@ import boto3
 from io import BytesIO
 from virgo_modules.src.re_utils import produce_simple_ts_from_model, edge_probas_lines
 from virgo_modules.src.ticketer_source import signal_analyser_object
-from utils import logo, execute_edgemodel_lambda, reading_last_execution, s3_image_reader, aws_print_object, get_connection, call_edge_json, dowload_any_object
+from utils import logo, execute_edgemodel_lambda, reading_last_execution, get_connection, call_edge_json, dowload_any_object
 
 configs = yaml.safe_load(Path('configs.yaml').read_text())
 debug_mode = configs["debug_mode"]
@@ -143,9 +143,7 @@ if st.button('Launch'):
 
                     fig = sao.signal_analyser(test_size = 250, feature_name = edge_name, days_list = [7,15,30], threshold = 0.05,verbose = False)
                     st.pyplot(fig)
-                    # name = f'signals_strategy_distribution_sirius_edge.png'
-                    # fig = s3_image_reader(bucket = "virgo-data",key = f"edge_models/sirius/{symbol_name}/{name}")
-                    # st.image(fig)
+
                 except:
                     st.write("no data available :(")
 
@@ -173,17 +171,5 @@ if st.button('Launch'):
                 except:
                     st.write("no plot available :(")
 
-                # try:
-                #     name = str(f'signals_strategy_return_sirius_edge.json')
-                #     aws_print_object(file_name = name, type = 'message', streamlit_conn = streamlit_conn, conn = conn, bucket = bucket, folder_path = f'edge_models/sirius/{symbol_name}/')
-                # except:
-                #     st.write("no plot available :(")
-
-                # try:
-                #     name = f'signals_strategy_return_sirius_edge.png'
-                #     fig = s3_image_reader(bucket = "virgo-data",key = f"edge_models/sirius/{symbol_name}/{name}")
-                #     st.image(fig)
-                # except:
-                #     st.write("no plot available :(")
 
 st.button("Re-run")
