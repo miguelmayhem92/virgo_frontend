@@ -13,8 +13,8 @@ market_indexes:
   - "DAX" : "^GDAXI"
 multi_symbols:
   - "top-low"
+  - "starting-high"
   - "down_tickers"
-  - "in_market"
 market_plots:
   - "panel signals": 
       name : "panel_signals.json"
