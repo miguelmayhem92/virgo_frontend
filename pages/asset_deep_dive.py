@@ -11,7 +11,7 @@ from io import BytesIO
 from virgo_modules.src.re_utils import produce_plotly_plots, edge_probas_lines, produce_signals
 from virgo_modules.src.ticketer_source import signal_analyser_object
 
-from utils import logo, reading_last_execution, dowload_any_object
+from utils import logo, reading_last_execution, dowload_any_object, extend_message
 
 configs = yaml.safe_load(Path('configs.yaml').read_text())
 debug_mode = configs["debug_mode"]
@@ -55,6 +55,9 @@ For backtesting:
 
 high_exit = st.number_input('high exit:', max_value = 10, min_value=0, value= 5)
 low_exit = st.number_input('low exit:', max_value = 10, min_value=0, value= 5)
+
+late_opening = st.slider('late opening:', max_value = 10, min_value=0, value= 0)
+late_opening = False if late_opening == 0 else late_opening
 
 st.write(
     """
@@ -140,16 +143,19 @@ if st.button('Launch'):
             for signal in signals:      
                 st.subheader(f"{signals_map[signal]} - analysis and backtest", divider='rainbow')
                 try:
-                    fig = sao.signal_analyser(test_size = 250, feature_name = signal, days_list = [7,15,30], threshold = 0.05,verbose = False)
+                    fig = sao.signal_analyser(test_size = 250, feature_name = signal, days_list = [7,15,30], threshold = 0.05,verbose = False, signal_position = late_opening)
                     st.pyplot(fig)
                 except:
                     st.write("no plot available :(")
                 try:
-                    fig2, json_message = sao.create_backtest_signal(days_strategy = 30, test_size = 250, feature_name = signal, **exit_params)
+                    fig2, json_message = sao.create_backtest_signal(days_strategy = 30, test_size = 250, feature_name = signal, **exit_params, signal_position = late_opening)
+                    json_message = extend_message(json_message, data_frame, signal)
+
                     st.write(json_message)
                     buf = BytesIO()
                     fig2.savefig(buf, format="png")
                     st.image(buf)
+
                 except:
                     st.write("no plot available :(")
         with tab_edge:
@@ -199,7 +205,7 @@ if st.button('Launch'):
 
                     sao = signal_analyser_object(data_frame_edge, symbol_name, save_path = False, save_aws = False, show_plot = False, aws_credentials = False, return_fig = True)
 
-                    fig = sao.signal_analyser(test_size = 250, feature_name = edge_name, days_list = [7,15,30], threshold = 0.05,verbose = False)
+                    fig = sao.signal_analyser(test_size = 250, feature_name = edge_name, days_list = [7,15,30], threshold = 0.05,verbose = False, signal_position = late_opening)
                     st.pyplot(fig)
 
                 except:
@@ -215,7 +221,8 @@ if st.button('Launch'):
                         'high_exit': 5,
                         'low_exit': -4
                     }
-                    fig2, json_message = sao.create_backtest_signal(days_strategy = 30, test_size = 250, feature_name = edge_name, **exit_strategy)
+                    fig2, json_message = sao.create_backtest_signal(days_strategy = 30, test_size = 250, feature_name = edge_name, **exit_strategy, signal_position = late_opening)
+                    json_message = extend_message(json_message, data_frame, signal)
                     st.write(json_message)
                     buf = BytesIO()
                     fig2.savefig(buf, format="png")

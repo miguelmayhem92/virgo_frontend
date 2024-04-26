@@ -9,6 +9,7 @@ import json
 import pandas as pd
 import requests
 import numpy as np
+from virgo_modules.src.ticketer_source import stock_eda_panel
 
 def get_connection():
     try:
@@ -289,3 +290,33 @@ def dowload_any_object(file_name, folder, file_type, bucket):
         df = json.loads(jsonfile)
 
     return df
+
+class data_inherit_stock_eda_panel(stock_eda_panel):
+    def __init__(self, data):
+        self.df = data
+
+type_map = {0:'no signal', -1: 'low signal', 1:'high signal'}
+
+def extend_message(json_message, data_frame, signal):
+    """
+    extended message from signal analyser object using stock_eda_panel extended class
+
+    arguments:
+        json_message (json): json message
+        data_frame (pd.DataFrame): data with features
+        signal (str): feature name
+
+    returns:
+        json_message (json): resulting json message
+    """
+    extend_sep = data_inherit_stock_eda_panel(data_frame)
+    extend_sep.produce_order_features(signal)
+
+    current_position = extend_sep.df.iloc[-1][f'order_signal_{signal}']
+    current_type = extend_sep.df.iloc[-1][f'discrete_signal_{signal}']
+    type_ = type_map.get(current_type,'blurry signal')
+
+    comp_message = f'{type_} position {current_position}'
+    json_message['current signal'] = comp_message
+
+    return json_message

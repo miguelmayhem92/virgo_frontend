@@ -7,7 +7,7 @@ import boto3
 from io import BytesIO
 from virgo_modules.src.re_utils import produce_simple_ts_from_model, edge_probas_lines, produce_signals
 from virgo_modules.src.ticketer_source import signal_analyser_object
-from utils import logo, execute_edgemodel_lambda, reading_last_execution, get_connection, call_edge_json, dowload_any_object
+from utils import logo, execute_edgemodel_lambda, reading_last_execution, get_connection, call_edge_json, dowload_any_object, extend_message
 
 configs = yaml.safe_load(Path('configs.yaml').read_text())
 debug_mode = configs["debug_mode"]
@@ -93,6 +93,7 @@ if st.button('Launch'):
                 #     st.write("no plot available :(")
                 try:
                     fig2, json_message = sao.create_backtest_signal(days_strategy = 30, test_size = 250, feature_name = signal)
+                    json_message = extend_message(json_message, df, signal)
                     st.write(json_message)
                     buf = BytesIO()
                     fig2.savefig(buf, format="png")
@@ -162,6 +163,7 @@ if st.button('Launch'):
                         'low_exit': -4
                     }
                     fig2, json_message = sao.create_backtest_signal(days_strategy = 30, test_size = 250, feature_name = edge_name, **exit_strategy)
+                    json_message = extend_message(json_message, data_frame, signal)
                     st.write(json_message)
                     buf = BytesIO()
                     fig2.savefig(buf, format="png")
