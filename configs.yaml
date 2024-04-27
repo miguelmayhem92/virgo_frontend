@@ -22,8 +22,11 @@ market_plots:
   - "current state": 
       name: "market_message.json"
       data_type : "message"
-  - "forecast" : 
+  - "forecastings" : 
       name: "forecast_plot.json"
+      data_type : "plot"
+  - "states analysis":
+      name: "hmm_analysis.json"
       data_type : "plot"
   - "states scaled time series" : 
       name: "ts_hmm.json"
