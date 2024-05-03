@@ -6,7 +6,7 @@ import datetime
 import boto3
 from io import BytesIO
 from virgo_modules.src.re_utils import produce_simple_ts_from_model, edge_probas_lines, produce_signals
-from virgo_modules.src.ticketer_source import signal_analyser_object
+from virgo_modules.src.ticketer_source import signal_analyser_object, analyse_index
 from utils import logo, execute_edgemodel_lambda, reading_last_execution, get_connection, call_edge_json, dowload_any_object, extend_message
 
 configs = yaml.safe_load(Path('configs.yaml').read_text())
@@ -58,7 +58,16 @@ st.write(
 on_edge = st.toggle('Activate edge model')
 edge_threshold = st.slider('Edge threshold',30, 100, 40)/100
 
-tab_overview,tab_backtest, tab_edge = st.tabs(['overview', 'backtest signal', 'edge analysis'])
+on_market_risk = st.toggle('Activate market risk')
+market_indexes = configs["market_indexes"]
+market_indexes = {k:v for list_item in market_indexes for (k,v) in list_item.items() if v != '^VIX'}
+market_indexes_ = list(market_indexes.keys())
+market_index = st.selectbox(
+    'select one option',
+    tuple(market_indexes_)
+)
+
+tab_overview,tab_backtest, tab_edge, market_risk_tab = st.tabs(['overview', 'backtest signal', 'edge analysis', 'market risk'])
 
 feature_config_generic = {
     'ROC':{'method': 'roc_feature', 'config_params': {'threshold': threshold, 'window': roc_window}},
@@ -177,5 +186,20 @@ if st.button('Launch'):
                 except:
                     st.write("no plot available :(")
 
+        with market_risk_tab:
+            if on_market_risk:
+                market_index_symbol = market_indexes[market_index]
 
+                lag = 2
+                n_obs = 3500
+                window_size = '15y'
+
+                aiv = analyse_index(index_data = market_index_symbol, asset = symbol_name, n_obs = n_obs, lag = lag, data_window = window_size, return_fig = True, show_plot = False)
+                aiv.process_data()
+                fig = aiv.plot_betas(sample_size = 30, offset = 5, subsample_ts =False)
+                st.pyplot(fig)
+
+                aiv.get_betas(subsample_ts=30)
+                betas_result = aiv.states_result
+                st.write(betas_result)
 st.button("Re-run")

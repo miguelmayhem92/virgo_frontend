@@ -9,7 +9,7 @@ import time
 from io import BytesIO
 
 from virgo_modules.src.re_utils import produce_plotly_plots, edge_probas_lines, produce_signals
-from virgo_modules.src.ticketer_source import signal_analyser_object
+from virgo_modules.src.ticketer_source import signal_analyser_object, analyse_index
 
 from utils import logo, reading_last_execution, dowload_any_object, extend_message
 
@@ -68,6 +68,15 @@ st.write(
 on_edge = st.toggle('Activate edge model')
 edge_threshold = st.slider('Edge threshold',30, 100, 40)/100
 
+on_market_risk = st.toggle('Activate market risk')
+market_indexes = configs["market_indexes"]
+market_indexes = {k:v for list_item in market_indexes for (k,v) in list_item.items() if v != '^VIX'}
+market_indexes_ = ['DEFAULT'] + list(market_indexes.keys())
+market_index = st.selectbox(
+    'select one option',
+    tuple(market_indexes_)
+)
+
 
 exit_params = {
     'high_exit': float(high_exit),
@@ -81,7 +90,7 @@ signals_dict = configs['signals']
 signals_map = {k:v for list_item in signals_dict for (k,v) in list_item.items()}
 signals = list(signals_map.keys())
 
-tab_overview, tab_signal, tab_edge = st.tabs(['overview', 'signal back-test', 'edge analysis'])
+tab_overview, tab_signal, tab_edge, tab_market_risk = st.tabs(['overview', 'signal back-test', 'edge analysis', 'market risk'])
 
 if st.button('Launch'):
     with st.spinner('.......................... Now loading ..........................'):
@@ -235,5 +244,33 @@ if st.button('Launch'):
                     st.plotly_chart(plot , use_container_width=True)
                 except:
                     st.write("no plot available :(")
+        with tab_market_risk:
+            if on_market_risk:
+                my_error = False
+                if market_index == 'DEFAULT':
+                    try:
+                        market_betas = dowload_any_object(file_name = 'betas_market.csv', folder = 'market_betas/', file_type = 'csv', bucket = 'virgo-data').iloc[:,1:]
+                        asset_beta = market_betas[market_betas.asset == symbol_name].sort_values('rank')
+                        market_index_symbol = asset_beta[asset_beta['rank'] == 1].market_index.values[0]
+                    except:
+                        my_error = 'no best beta available :(, use another option'
+                else:
+                    market_index_symbol = market_indexes[market_index]
+                if not my_error:
+                    lag = 2
+                    n_obs = 3500
+                    window_size = '15y'
+
+                    aiv = analyse_index(index_data = market_index_symbol, asset = symbol_name, n_obs = n_obs, lag = lag, data_window = window_size, return_fig = True, show_plot = False)
+                    aiv.process_data()
+                    fig = aiv.plot_betas(sample_size = 30, offset = 5, subsample_ts =False)
+                    st.pyplot(fig)
+
+                    aiv.get_betas(subsample_ts=30)
+                    betas_result = aiv.states_result
+                    st.write(betas_result)
+                else:
+                    st.write(my_error)
+
 
 st.button("Re-run")
