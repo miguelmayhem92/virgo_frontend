@@ -66,17 +66,19 @@ st.write(
 )
 
 on_edge = st.toggle('Activate edge model')
-edge_threshold = st.slider('Edge threshold',30, 100, 40)/100
+if on_edge:
+    edge_threshold = st.slider('Edge threshold',30, 100, 40)/100
 
 on_market_risk = st.toggle('Activate market risk')
-market_indexes = configs["market_indexes"]
-market_indexes = {k:v for list_item in market_indexes for (k,v) in list_item.items() if v != '^VIX'}
-market_indexes_ = ['DEFAULT'] + list(market_indexes.keys())
-market_index = st.selectbox(
-    'select one option',
-    tuple(market_indexes_)
-)
-
+if on_market_risk:
+    market_indexes = configs["market_indexes"]
+    market_indexes = {k:v for list_item in market_indexes for (k,v) in list_item.items() if v != '^VIX'}
+    market_indexes_ = ['DEFAULT'] + list(market_indexes.keys())
+    market_index = st.selectbox(
+        'select one option',
+        tuple(market_indexes_)
+    )
+    inv_market_indexes = {v:k for k,v in market_indexes.items()}
 
 exit_params = {
     'high_exit': float(high_exit),
@@ -268,6 +270,8 @@ if st.button('Launch'):
 
                     aiv.get_betas(subsample_ts=30)
                     betas_result = aiv.states_result
+                    for i,_ in enumerate(betas_result):
+                        betas_result[i]['index'] = inv_market_indexes.get(betas_result[i]['index'])
                     st.write(betas_result)
                 else:
                     st.write(my_error)
