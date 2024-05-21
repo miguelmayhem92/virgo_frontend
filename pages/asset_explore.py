@@ -207,7 +207,6 @@ if st.button('Launch'):
 
                 for i,_ in enumerate(betas_result):
                     betas_result[i]['index'] = inv_market_indexes.get(betas_result[i]['index'])
-                
-                st.write(betas_result)
+
                 st.write(betas_result)
 st.button("Re-run")

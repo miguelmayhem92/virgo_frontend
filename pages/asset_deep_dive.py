@@ -272,6 +272,7 @@ if st.button('Launch'):
                     betas_result = aiv.states_result
                     for i,_ in enumerate(betas_result):
                         betas_result[i]['index'] = inv_market_indexes.get(betas_result[i]['index'])
+
                     st.write(betas_result)
                 else:
                     st.write(my_error)
