@@ -15,6 +15,7 @@ multi_symbols:
   - "top-low"
   - "starting-high"
   - "down_tickers"
+  - "sirius_distribution"
 market_plots:
   - "panel signals": 
       name : "panel_signals.json"
