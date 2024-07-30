@@ -320,3 +320,23 @@ def extend_message(json_message, data_frame, signal):
     json_message['current signal'] = comp_message
 
     return json_message
+
+def signal_position_message(data_frame, signal):
+
+    """
+    create message of the signal position of the current data
+
+    arguments:
+        data_frame (pd.DataFrame): data with features
+        signal (str): feature name
+
+    returns:
+        json_message (json): resulting json message
+    """
+    extend_sep = data_inherit_stock_eda_panel(data_frame)
+    extend_sep.produce_order_features(signal)
+    current_position = extend_sep.df.iloc[-1][f'order_signal_{signal}']
+    current_type = extend_sep.df.iloc[-1][f'discrete_signal_{signal}']
+    type_ = type_map.get(current_type,'blurry signal')
+    comp_message = f'{type_} position {current_position}'
+    return {'current signal': comp_message}

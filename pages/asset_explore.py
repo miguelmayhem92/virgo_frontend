@@ -6,8 +6,9 @@ import datetime
 import boto3
 from io import BytesIO
 from virgo_modules.src.re_utils import produce_simple_ts_from_model, edge_probas_lines, produce_signals
-from virgo_modules.src.ticketer_source import signal_analyser_object, analyse_index
-from utils import logo, execute_edgemodel_lambda, reading_last_execution, get_connection, call_edge_json, dowload_any_object, extend_message
+from virgo_modules.src.ticketer_source import  analyse_index
+from virgo_modules.src.backtester import SignalAnalyserObject
+from utils import logo, execute_edgemodel_lambda, reading_last_execution, get_connection, call_edge_json, dowload_any_object, signal_position_message
 
 configs = yaml.safe_load(Path('configs.yaml').read_text())
 debug_mode = configs["debug_mode"]
@@ -83,6 +84,11 @@ signals_map = {
     'rel_MA_spread': "Moving Averages"
 }
 
+exit_strategy = {
+    'high_exit': 5,
+    'low_exit': -4
+}
+
 bucket = 'virgo-data'
 models_descriptions = {k:v for list_item in models_dict for (k,v) in list_item.items()}
 signals = list(feature_config_generic.keys())
@@ -95,18 +101,20 @@ if st.button('Launch'):
             st.plotly_chart(fig, use_container_width=True)
 
         with tab_backtest:
-            sao = signal_analyser_object(df, symbol_name, save_path = False, save_aws = False, show_plot = False, aws_credentials = False, return_fig = True)
-            for signal in signals:      
+            for signal in signals:   
+                sao = SignalAnalyserObject(df, symbol_name, signal,test_size = 250, save_path = False, save_aws = False,
+                                            show_plot = False, aws_credentials = False, return_fig = True)   
                 st.subheader(f"{signals_map[signal]} - analysis and backtest", divider='rainbow')
                 # try:
-                fig = sao.signal_analyser(test_size = 250, feature_name = signal, days_list = [7,15,30], threshold = 0.05,verbose = False)
+                fig = sao.signal_analyser(days_list = [7,15,30])
                 st.pyplot(fig)
                 # except:
                 #     st.write("no plot available :(")
                 try:
-                    fig2, json_message = sao.create_backtest_signal(days_strategy = 30, test_size = 250, feature_name = signal)
-                    json_message = extend_message(json_message, df, signal)
-                    st.write(json_message)
+                    fig2, json_messages = sao.create_backtest_signal(days_strategy = 30, **exit_strategy, open_in_list=['down','up'])
+                    current_signal_position = signal_position_message(df, signal)
+                    json_messages.append(current_signal_position)
+                    st.write(json_messages)
                     buf = BytesIO()
                     fig2.savefig(buf, format="png")
                     st.image(buf)
@@ -156,9 +164,9 @@ if st.button('Launch'):
                 new_signal_list = ['Date','proba_target_down','proba_target_up',f'signal_up_{model_name}_edge',f'acc_up_{model_name}_edge',f'signal_low_{model_name}_edge',f'acc_low_{model_name}_edge']
                 data_frame = df.merge(edge_signals[new_signal_list], on = 'Date', how = 'left')
 
-                sao = signal_analyser_object(data_frame, symbol_name, save_path = False, save_aws = False, show_plot = False, aws_credentials = False, return_fig = True)
-
-                fig = sao.signal_analyser(test_size = 250, feature_name = edge_name, days_list = [7,15,30], threshold = 0.05,verbose = False)
+                sao = SignalAnalyserObject(data_frame, symbol_name, edge_name,test_size = 250, save_path = False, save_aws = False,
+                                            show_plot = False, aws_credentials = False, return_fig = True)  
+                fig = sao.signal_analyser(days_list = [7,15,30])
                 st.pyplot(fig)
 
                 # except:
@@ -170,13 +178,12 @@ if st.button('Launch'):
                 except:
                     st.write("no message available :(")
                 try:
-                    exit_strategy = {
-                        'high_exit': 5,
-                        'low_exit': -4
-                    }
-                    fig2, json_message = sao.create_backtest_signal(days_strategy = 30, test_size = 250, feature_name = edge_name, **exit_strategy)
-                    json_message = extend_message(json_message, data_frame, signal)
-                    st.write(json_message)
+                    
+                    fig2, json_messages = sao.create_backtest_signal(days_strategy = 30, **exit_strategy, open_in_list=['down','up'])
+                    current_signal_position = signal_position_message(df, signal)
+                    json_messages.append(current_signal_position)
+                    st.write(json_messages)
+                
                     buf = BytesIO()
                     fig2.savefig(buf, format="png")
                     st.image(buf)
