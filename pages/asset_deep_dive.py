@@ -215,8 +215,7 @@ if st.button('Launch'):
 
                     new_signal_list = ['Date','proba_target_down','proba_target_up',f'signal_up_{model_name}_edge',f'acc_up_{model_name}_edge',f'signal_low_{model_name}_edge',f'acc_low_{model_name}_edge']
                     data_frame_edge = data_frame.merge(edge_signals[new_signal_list], on = 'Date', how = 'left')
-
-                    sao = SignalAnalyserObject(data_frame, symbol_name, signal,test_size = 250, signal_position = late_opening, save_path = False, save_aws = False,
+                    sao = SignalAnalyserObject(data_frame_edge, symbol_name, edge_name,test_size = 250, signal_position = late_opening, save_path = False, save_aws = False,
                                             show_plot = False, aws_credentials = False, return_fig = True)  
                     fig = sao.signal_analyser(days_list = [7,15,30])
                     st.pyplot(fig)
@@ -230,11 +229,7 @@ if st.button('Launch'):
                 except:
                     st.write("no message available :(")
                 try:
-                    exit_strategy = {
-                        'high_exit': 5,
-                        'low_exit': -4
-                    }
-                    fig2, json_messages = sao.create_backtest_signal(days_strategy = 30, **exit_strategy, open_in_list=['down','up'])
+                    fig2, json_messages = sao.create_backtest_signal(days_strategy = 30, **exit_params, open_in_list=['down','up'])
                     current_signal_position = signal_position_message(data_frame, signal)
                     json_messages.append(current_signal_position)
                     st.write(json_messages)
