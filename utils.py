@@ -345,6 +345,7 @@ def signal_position_message(data_frame, signal):
 def get_categorical_targets(df, horizon, flor_loss, top_gain):
     """
     produce binary target return taking future prices. it produce two targets, one for high returns and another for low returns
+    this function is taken from the ticket_object
 
     Arguments:
         horizon (int): number of lags and steps for future returns
