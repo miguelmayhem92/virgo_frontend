@@ -9,6 +9,7 @@ from virgo_modules.src.re_utils import produce_simple_ts_from_model, edge_probas
 from virgo_modules.src.ticketer_source import  analyse_index
 from virgo_modules.src.backtester import SignalAnalyserObject
 from utils import logo, execute_edgemodel_lambda, reading_last_execution, get_connection, call_edge_json, dowload_any_object, signal_position_message
+from utils import perf_metrics_message, get_categorical_targets
 
 configs = yaml.safe_load(Path('configs.yaml').read_text())
 debug_mode = configs["debug_mode"]
@@ -178,15 +179,26 @@ if st.button('Launch'):
                 except:
                     st.write("no message available :(")
                 try:
-                    
                     fig2, json_messages = sao.create_backtest_signal(days_strategy = 30, **exit_strategy, open_in_list=['down','up'])
                     current_signal_position = signal_position_message(df, signal)
                     json_messages.append(current_signal_position)
                     st.write(json_messages)
-                
                     buf = BytesIO()
                     fig2.savefig(buf, format="png")
                     st.image(buf)
+
+                    target_configs = {
+                        'params_up': {'flor_loss': 0, 'horizon': 6, 'top_gain': 3},
+                        'params_down': {'flor_loss': -4, 'horizon': 7, 'top_gain': 0}
+                    }
+                    target_params_up = target_configs['params_up']
+                    target_params_down = target_configs['params_down']
+                    data_frame = get_categorical_targets(data_frame, **target_params_up)
+                    data_frame = data_frame.drop(columns = ['target_down']).rename(columns = {'target_up':'target_up_save'})
+                    data_frame = get_categorical_targets(data_frame,**target_params_down)
+                    data_frame = data_frame.drop(columns = ['target_up']).rename(columns = {'target_up_save':'target_up'})
+                    perf_message = perf_metrics_message(data = data_frame, test_data_size = 250, edge_name = edge_name)
+                    st.write(perf_message)
                 except:
                     st.write("no plot available :(")
 

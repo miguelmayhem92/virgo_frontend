@@ -13,6 +13,7 @@ from virgo_modules.src.ticketer_source import  analyse_index
 from virgo_modules.src.backtester import SignalAnalyserObject
 
 from utils import logo, reading_last_execution, dowload_any_object, signal_position_message
+from utils import perf_metrics_message, get_categorical_targets
 
 configs = yaml.safe_load(Path('configs.yaml').read_text())
 debug_mode = configs["debug_mode"]
@@ -236,6 +237,19 @@ if st.button('Launch'):
                     buf = BytesIO()
                     fig2.savefig(buf, format="png")
                     st.image(buf)
+
+                    target_configs = {
+                        'params_up': {'flor_loss': 0, 'horizon': 6, 'top_gain': 3},
+                        'params_down': {'flor_loss': -4, 'horizon': 7, 'top_gain': 0}
+                    }
+                    target_params_up = target_configs['params_up']
+                    target_params_down = target_configs['params_down']
+                    data_frame_edge = get_categorical_targets(data_frame_edge, **target_params_up)
+                    data_frame_edge = data_frame_edge.drop(columns = ['target_down']).rename(columns = {'target_up':'target_up_save'})
+                    data_frame_edge = get_categorical_targets(data_frame_edge,**target_params_down)
+                    data_frame_edge = data_frame_edge.drop(columns = ['target_up']).rename(columns = {'target_up_save':'target_up'})
+                    perf_message = perf_metrics_message(data = data_frame_edge, test_data_size = 250, edge_name = edge_name)
+                    st.write(perf_message)
                 except:
                     st.write("no plot available :(")
 

@@ -10,6 +10,7 @@ import pandas as pd
 import requests
 import numpy as np
 from virgo_modules.src.ticketer_source import stock_eda_panel
+from sklearn.metrics import precision_score, recall_score
 
 def get_connection():
     try:
@@ -340,3 +341,66 @@ def signal_position_message(data_frame, signal):
     type_ = type_map.get(current_type,'blurry signal')
     comp_message = f'{type_} position {current_position}'
     return {'current signal': comp_message}
+
+def get_categorical_targets(df, horizon, flor_loss, top_gain):
+    """
+    produce binary target return taking future prices. it produce two targets, one for high returns and another for low returns
+
+    Arguments:
+        horizon (int): number of lags and steps for future returns
+        flor_loss (float): min loss return
+        top_gain (float): max gain return
+
+    Returns:
+        data frame with new colums
+    """
+
+    columns = list()
+
+    ## loops
+    for i in range(1,horizon+1):
+        df[f'target_{i}'] = df.High.shift(-i)
+        df[f'target_{i}'] = (df[f'target_{i}']/df.Open-1)*100
+
+        df[f'target_{i}'] = np.where(df[f'target_{i}'] >= top_gain,1,0)
+        columns.append(f'target_{i}')
+    df[f'target_up'] = df[columns].sum(axis=1)
+    df[f'target_up'] = np.where(df[f'target_up'] >=1,1,0 )
+    df = df.drop(columns = columns)
+
+    for i in range(1,horizon+1):
+        df[f'target_{i}'] = df.Low.shift(-i)
+        df[f'target_{i}'] = (df[f'target_{i}']/df.Open-1)*100
+
+        df[f'target_{i}'] = np.where(df[f'target_{i}'] <= flor_loss,1,0)
+        columns.append(f'target_{i}')
+    df[f'target_down'] = df[columns].sum(axis=1)
+    df[f'target_down'] = np.where(df[f'target_down'] >= 1,1,0 )
+    df = df.drop(columns = columns)
+    return df
+
+def perf_metrics_message(data, test_data_size, edge_name):
+    """
+    produce summary metrics given a data sample
+
+    Arguments:
+        data (pd.DataFrame): data
+        test_data_size (int): test data size
+        edge_name (str): edge name
+
+    Returns:
+        metrics of edge metrics, precision and recall
+    """
+    df_perf = data.iloc[-test_data_size:,:][['target_up','target_down',f'signal_up_{edge_name}', f'signal_low_{edge_name}']]
+    go_up_precision, go_up_recall = round(precision_score(df_perf['target_up'], df_perf[f'signal_low_{edge_name}'])*100,2), round(recall_score(df_perf['target_up'], df_perf[f'signal_low_{edge_name}'])*100,2)
+    go_down_precision, go_down_recall = round(precision_score(df_perf['target_down'], df_perf[f'signal_up_{edge_name}'])*100,2), round(recall_score(df_perf['target_down'], df_perf[f'signal_up_{edge_name}'])*100,2)
+    
+    results = {
+        'go up metrics':{
+            'precision':go_up_precision, 'recall':go_up_recall
+        },
+        'go down metrics':{
+            'precision':go_down_precision, 'recall':go_down_recall
+        }
+    }
+    return results
