@@ -98,7 +98,7 @@ if st.button('Launch'):
     with st.spinner('.......................... Now loading ..........................'):
         with tab_overview:
 
-            fig,df = produce_simple_ts_from_model(symbol_name, configs = feature_config_generic)
+            fig,df = produce_simple_ts_from_model(symbol_name, configs = feature_config_generic, n_days = 1500)
             st.plotly_chart(fig, use_container_width=True)
 
         with tab_backtest:
@@ -203,7 +203,7 @@ if st.button('Launch'):
                     st.write("no plot available :(")
 
                 try:
-                    plot = edge_probas_lines(data = data_frame, threshold = edge_threshold)
+                    plot = edge_probas_lines(data = data_frame, threshold = edge_threshold, look_back = 500)
                     st.plotly_chart(plot , use_container_width=True)
                 except:
                     st.write("no plot available :(")

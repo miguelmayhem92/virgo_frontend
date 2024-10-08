@@ -136,7 +136,7 @@ if st.button('Launch'):
                 if plot_name == "panel signals":
                     features_ = ['volatility_log_return', 'rel_MA_spread', 'target_mean_dow','pair_z_score','RSI','ROC','STOCHOSC']
                     spread_column = 'relative_spread_ma'
-                    fig = plotter.plot_asset_signals(features_, spread_column ,date_intervals = False)
+                    fig = plotter.plot_asset_signals(features_, spread_column ,date_intervals = False, look_back = 750)
                     st.plotly_chart(fig, use_container_width=True)
 
                 elif plot_name == "current state":
@@ -254,7 +254,7 @@ if st.button('Launch'):
                     st.write("no plot available :(")
 
                 try:
-                    plot = edge_probas_lines(data = data_frame_edge, threshold = edge_threshold)
+                    plot = edge_probas_lines(data = data_frame_edge, threshold = edge_threshold, look_back = 500)
                     st.plotly_chart(plot , use_container_width=True)
                 except:
                     st.write("no plot available :(")

@@ -89,7 +89,7 @@ if st.button('Launch'):
                 if plot_name == "panel signals":
                     features_ = ['volatility_log_return', 'rel_MA_spread', 'target_mean_dow','pair_z_score','RSI','ROC','STOCHOSC']
                     spread_column = 'relative_spread_ma'
-                    fig = plotter.plot_asset_signals(features_, spread_column ,date_intervals = False)
+                    fig = plotter.plot_asset_signals(features_, spread_column ,date_intervals = False, look_back=1000)
                     st.plotly_chart(fig, use_container_width=True)
 
                 elif plot_name == "current state":
