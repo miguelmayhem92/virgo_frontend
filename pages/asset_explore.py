@@ -98,7 +98,7 @@ if st.button('Launch'):
     with st.spinner('.......................... Now loading ..........................'):
         with tab_overview:
 
-            fig,df = produce_simple_ts_from_model(symbol_name, configs = feature_config_generic, n_days = 1500)
+            fig,df = produce_simple_ts_from_model(symbol_name, configs = feature_config_generic, n_days = 900)
             st.plotly_chart(fig, use_container_width=True)
 
         with tab_backtest:
