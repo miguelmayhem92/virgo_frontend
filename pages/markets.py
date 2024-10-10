@@ -8,6 +8,7 @@ from utils import logo, print_object, dowload_any_object, get_connection
 
 from virgo_modules.src.re_utils import produce_plotly_plots
 import time
+from auth_utils import menu_with_redirect
 
 configs = yaml.safe_load(Path('configs.yaml').read_text())
 debug_mode = configs["debug_mode"]
@@ -16,6 +17,7 @@ market_indexes = {k:v for list_item in market_indexes for (k,v) in list_item.ite
 
 st.set_page_config(layout="wide")
 logo(debug_mode)
+menu_with_redirect()
 
 bucket = 'virgo-data'
 

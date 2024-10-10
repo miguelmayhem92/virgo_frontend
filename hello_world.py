@@ -1,25 +1,15 @@
 import streamlit as st
 from utils import logo
+from auth_utils import menu
 from pathlib import Path
-from st_pages import Page, show_pages
 import yaml
 
 configs = yaml.safe_load(Path('configs.yaml').read_text())
 debug_mode = configs["debug_mode"]
 
-show_pages(
-    [
-        Page("hello_world.py", "Home", "🏠"),
-        Page("pages/asset_explore.py", "Explore Assets"),
-        Page("pages/asset_deep_dive.py", "Deep Dive"),
-        Page("pages/markets.py", "Markets"),
-        Page("pages/multiple_symbols.py", "Recomendations")
-    ]
-)
-
-
 st.set_page_config(layout="wide")
 logo(debug_mode)
+menu()
 
 st.write("# Welcome to Virgo! 📈")
 

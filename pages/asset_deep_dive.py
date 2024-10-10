@@ -15,6 +15,8 @@ from virgo_modules.src.backtester import SignalAnalyserObject
 from utils import logo, reading_last_execution, dowload_any_object, signal_position_message
 from utils import perf_metrics_message, get_categorical_targets
 
+from auth_utils import menu_with_redirect
+
 configs = yaml.safe_load(Path('configs.yaml').read_text())
 debug_mode = configs["debug_mode"]
 asset_plots = configs["asset_plots"]
@@ -24,6 +26,7 @@ bucket = 'virgo-data'
 
 st.set_page_config(layout="wide")
 logo(debug_mode)
+menu_with_redirect()
 
 st.markdown("# Asset deep-dive")
 

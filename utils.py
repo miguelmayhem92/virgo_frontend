@@ -33,19 +33,19 @@ def s3_image_reader(bucket,key):
 
 def logo(debug_mode):
     if debug_mode:
-        add_logo(".\images\Virgo_blanco_resize.png", height=150) 
+        add_logo(".\images\Virgo_blanco_resize.png", height=230) 
     else:
-        add_logo("https://raw.githubusercontent.com/miguelmayhem92/virgo_frontend/main/images/Virgo_blanco_resize.png", height=150)
+        add_logo("https://raw.githubusercontent.com/miguelmayhem92/virgo_frontend/main/images/Virgo_blanco_resize.png", height=230)
     st.markdown(
              """
             <style>
                 [data-testid="stSidebar"]::before {
                     content: "Statistical arbitrage app";
-                    margin-left: 20px;
+                    margin-left: 35px;
                     margin-top: 20px;
                     font-size: 20px;
                     position: relative;
-                    top: 200px;
+                    top: 250px;
                     
                 }
             </style>

@@ -10,6 +10,7 @@ from virgo_modules.src.ticketer_source import  analyse_index
 from virgo_modules.src.backtester import SignalAnalyserObject
 from utils import logo, execute_edgemodel_lambda, reading_last_execution, get_connection, call_edge_json, dowload_any_object, signal_position_message
 from utils import perf_metrics_message, get_categorical_targets
+from auth_utils import menu_with_redirect
 
 configs = yaml.safe_load(Path('configs.yaml').read_text())
 debug_mode = configs["debug_mode"]
@@ -20,6 +21,7 @@ bucket = 'virgo-data'
 
 st.set_page_config(layout="wide")
 logo(debug_mode)
+menu_with_redirect()
 
 st.markdown("# Explore assets")
 

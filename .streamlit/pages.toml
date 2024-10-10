@@ -1,0 +1,20 @@
+[[pages]]
+path = "hello_world.py"
+name = "Home"
+icon = "🏠"
+
+[[pages]]
+path = "pages/asset_explore.py"
+name = "Explore Assets"
+
+[[pages]]
+path = "pages/asset_deep_dive.py"
+name = "Deep Dive"
+
+[[pages]]
+path = "pages/markets.py"
+name = "Markets"
+
+[[pages]]
+path = "pages/multiple_symbols.py"
+name = "Recomendations"
