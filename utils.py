@@ -33,26 +33,11 @@ def s3_image_reader(bucket,key):
 
 def logo(debug_mode):
     if debug_mode:
-        add_logo(".\images\Virgo_blanco_resize.png", height=230) 
+         st.sidebar.image(".\images\Virgo_blanco_resize.png",use_column_width=True) 
     else:
-        add_logo("https://raw.githubusercontent.com/miguelmayhem92/virgo_frontend/main/images/Virgo_blanco_resize.png", height=230)
-    st.markdown(
-             """
-            <style>
-                [data-testid="stSidebar"]::before {
-                    content: "Statistical arbitrage app";
-                    margin-left: 35px;
-                    margin-top: 20px;
-                    font-size: 20px;
-                    position: relative;
-                    top: 250px;
-                    
-                }
-            </style>
-            """,
-            unsafe_allow_html=True,
-        )
-
+         st.sidebar.image("https://raw.githubusercontent.com/miguelmayhem92/virgo_frontend/main/images/Virgo_blanco_resize.png",use_column_width=True)
+    st.sidebar.title("Statistical arbitrage")
+    
 def execute_asset_lambda(payload):
     try:
         url = st.secrets['deep_dive_asset_api_url']

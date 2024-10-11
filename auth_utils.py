@@ -1,5 +1,6 @@
 import streamlit as st
 import hmac
+from st_pages import hide_pages
 
 def _check_password():
     """Authenticate user and manage login state."""
@@ -27,7 +28,14 @@ def _check_password():
 
 
 def _authenticated_menu():
-    pass
+    st.sidebar.page_link("hello_world.py", label="Home", icon="🏡")
+    st.sidebar.page_link("pages/asset_explore.py", label="Explore assets")
+    if st.session_state.role == 'admin':
+        st.sidebar.page_link("pages/asset_deep_dive.py", label="Deep dive")
+        st.sidebar.page_link("pages/markets.py", label="Markets")
+        st.sidebar.page_link("pages/multiple_symbols.py", label="Batches")
+    if st.sidebar.button("Logout"):
+        _logout()
 
 
 def _unauthenticated_menu():
