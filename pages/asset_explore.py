@@ -5,7 +5,8 @@ from pathlib import Path
 import datetime
 import boto3
 from io import BytesIO
-from virgo_modules.src.re_utils import produce_simple_ts_from_model, edge_probas_lines, produce_signals
+from virgo_modules.src.re_utils import produce_simple_ts_from_model, produce_signals
+from virgo_modules.src.edge_utils.edge_utils import edge_probas_lines
 from virgo_modules.src.ticketer_source import  analyse_index
 from virgo_modules.src.backtester import SignalAnalyserObject
 from utils import logo, execute_edgemodel_lambda, reading_last_execution, get_connection, call_edge_json, dowload_any_object, signal_position_message
