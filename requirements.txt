@@ -25,3 +25,4 @@ statsmodels==0.13.5
 hmmlearn == 0.3.0
 xgboost==1.7.3
 feature-engine==1.6.1
+mlflow==2.1.1
