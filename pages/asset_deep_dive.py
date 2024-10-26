@@ -191,18 +191,18 @@ if st.button('Launch'):
                     conn = get_connection()
                     streamlit_conn = True
 
-                def edgemodel_lambda_execution(symbol_name,conformal,explain):
+                def edgemodel_lambda_execution(symbol_name):
                     payload = {
-                        'asset' : symbol_name,
-                        'conformal' : conformal,
-                        'interpret' : explain,
+                        'asset': symbol_name,
+                        'conformal': True,
+                        'interpret': True,
                     }
                     execute_edgemodel_lambda(payload)
 
                 try:
                     aws_report_date = reading_last_execution('current_edge.json', f'edge_models/sirius/{symbol_name}/', 'ExecutionDate')
                 except:
-                    edgemodel_lambda_execution(symbol_name,conformal,explain)
+                    edgemodel_lambda_execution(symbol_name)
                     aws_report_date = reading_last_execution('current_edge.json', f'edge_models/sirius/{symbol_name}/', 'ExecutionDate')
 
                 print(f"execution_date: {execution_date}")
@@ -210,9 +210,10 @@ if st.button('Launch'):
 
                 if execution_date != aws_report_date:
                     ## lambda execution if no available json 
-                    edgemodel_lambda_execution(symbol_name,conformal,explain)
+                    edgemodel_lambda_execution(symbol_name)
                 
                 try:
+                    time.sleep(3)
                     model_name = 'sirius'
                     edge_name = 'sirius_edge'
                     csv_name = f'{model_name}_{symbol_name}_edges.csv'
