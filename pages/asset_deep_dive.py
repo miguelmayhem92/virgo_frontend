@@ -8,9 +8,12 @@ import boto3
 import time 
 from io import BytesIO
 
-from virgo_modules.src.re_utils import produce_plotly_plots, edge_probas_lines, produce_signals
+from virgo_modules.src.re_utils import produce_plotly_plots, produce_signals
 from virgo_modules.src.ticketer_source import  analyse_index
 from virgo_modules.src.backtester import SignalAnalyserObject
+from virgo_modules.src.edge_utils.edge_utils import edge_probas_lines
+from virgo_modules.src.edge_utils.conformal_utils import edge_conformal_lines
+from virgo_modules.src.edge_utils.shap_utils import edge_shap_lines
 
 from utils import logo, reading_last_execution, dowload_any_object, signal_position_message
 from utils import perf_metrics_message, get_categorical_targets
@@ -73,6 +76,8 @@ st.write(
 on_edge = st.toggle('Activate edge model')
 if on_edge:
     edge_threshold = st.slider('Edge threshold',30, 100, 40)/100
+    conformal = st.checkbox("Conformal prediction")
+    explain = st.checkbox("Explain")
 
 on_market_risk = st.toggle('Activate market risk')
 if on_market_risk:
@@ -113,7 +118,7 @@ if st.button('Launch'):
             streamlit_conn = True
         
         def asset_lambda_execution(symbol_name):
-            payload = {"asset": symbol_name}
+            payload = {'asset' : symbol_name}
             execute_asset_lambda(payload)
     
         try:
@@ -153,7 +158,6 @@ if st.button('Launch'):
                 elif plot_name == "states scaled time series":
                     fig = plotter.explore_states_ts()
                     st.plotly_chart(fig, use_container_width=True)
-
         with tab_signal:
             for signal in signals: 
                 sao = SignalAnalyserObject(data_frame, symbol_name, signal,test_size = 250, signal_position = late_opening, save_path = False, save_aws = False,
@@ -187,14 +191,18 @@ if st.button('Launch'):
                     conn = get_connection()
                     streamlit_conn = True
 
-                def edgemodel_lambda_execution(symbol_name):
-                    payload = {"asset": symbol_name}
+                def edgemodel_lambda_execution(symbol_name,conformal,explain):
+                    payload = {
+                        'asset' : symbol_name,
+                        'conformal' : conformal,
+                        'interpret' : explain,
+                    }
                     execute_edgemodel_lambda(payload)
 
                 try:
                     aws_report_date = reading_last_execution('current_edge.json', f'edge_models/sirius/{symbol_name}/', 'ExecutionDate')
                 except:
-                    edgemodel_lambda_execution(symbol_name)
+                    edgemodel_lambda_execution(symbol_name,conformal,explain)
                     aws_report_date = reading_last_execution('current_edge.json', f'edge_models/sirius/{symbol_name}/', 'ExecutionDate')
 
                 print(f"execution_date: {execution_date}")
@@ -202,7 +210,7 @@ if st.button('Launch'):
 
                 if execution_date != aws_report_date:
                     ## lambda execution if no available json 
-                    edgemodel_lambda_execution(symbol_name)
+                    edgemodel_lambda_execution(symbol_name,conformal,explain)
                 
                 try:
                     model_name = 'sirius'
@@ -216,7 +224,6 @@ if st.button('Launch'):
                     probas = dowload_any_object(csv_name, f'edge_models/{model_name}/{symbol_name}/', 'csv', bucket)
                     probas['Date'] = pd.to_datetime(probas['Date'])
                     edge_signals = produce_signals(probas, edge_name, edge_threshold, label_prediction)
-
                     new_signal_list = ['Date','proba_target_down','proba_target_up',f'signal_up_{model_name}_edge',f'acc_up_{model_name}_edge',f'signal_low_{model_name}_edge',f'acc_low_{model_name}_edge']
                     data_frame_edge = data_frame.merge(edge_signals[new_signal_list], on = 'Date', how = 'left')
                     sao = SignalAnalyserObject(data_frame_edge, symbol_name, edge_name,test_size = 250, signal_position = late_opening, save_path = False, save_aws = False,
@@ -257,8 +264,20 @@ if st.button('Launch'):
                     st.write("no plot available :(")
 
                 try:
-                    plot = edge_probas_lines(data = data_frame_edge, threshold = edge_threshold, look_back = 500)
-                    st.plotly_chart(plot , use_container_width=True)
+                    if not conformal:
+                        plot = edge_probas_lines(data = data_frame_edge, threshold = edge_threshold, look_back = 500)
+                        st.plotly_chart(plot , use_container_width=True)
+                    if conformal:
+                        csv_name = f'{model_name}_{symbol_name}_conformal.csv'
+                        conf_df = dowload_any_object(csv_name, f'edge_models/{model_name}/{symbol_name}/', 'csv', bucket)
+                        fig = edge_conformal_lines(conf_df, [0.25,0.50,0.75], threshold=edge_threshold)
+                        st.plotly_chart(fig , use_container_width=True)
+                    if explain:
+                        csv_name = f'{model_name}_{symbol_name}_shap.csv'
+                        df_shap = dowload_any_object(csv_name, f'edge_models/{model_name}/{symbol_name}/', 'csv', bucket)
+                        st.markdown('#### exaplainer:')
+                        fig = edge_shap_lines(data=df_shap.drop(columns = ['Unnamed: 0']))
+                        st.plotly_chart(fig , use_container_width=True)
                 except:
                     st.write("no plot available :(")
         with tab_market_risk:
