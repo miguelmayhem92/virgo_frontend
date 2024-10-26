@@ -213,7 +213,6 @@ if st.button('Launch'):
                     edgemodel_lambda_execution(symbol_name)
                 
                 try:
-                    time.sleep(3)
                     model_name = 'sirius'
                     edge_name = 'sirius_edge'
                     csv_name = f'{model_name}_{symbol_name}_edges.csv'
