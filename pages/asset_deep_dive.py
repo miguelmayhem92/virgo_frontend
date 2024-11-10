@@ -11,7 +11,7 @@ from io import BytesIO
 from virgo_modules.src.re_utils import produce_plotly_plots, produce_signals
 from virgo_modules.src.ticketer_source import  analyse_index
 from virgo_modules.src.backtester import SignalAnalyserObject
-from virgo_modules.src.edge_utils.edge_utils import edge_probas_lines
+from virgo_modules.src.edge_utils.edge_utils import edge_probas_lines, get_rolling_probs
 from virgo_modules.src.edge_utils.conformal_utils import edge_conformal_lines
 from virgo_modules.src.edge_utils.shap_utils import edge_shap_lines
 
@@ -76,6 +76,7 @@ st.write(
 on_edge = st.toggle('Activate edge model')
 if on_edge:
     edge_threshold = st.slider('Edge threshold',30, 100, 40)/100
+    smooth_windown = st.slider('Smooth window',1, 30, 3)
     conformal = st.checkbox("Conformal prediction")
     explain = st.checkbox("Explain")
 
@@ -267,11 +268,15 @@ if st.button('Launch'):
                     if not conformal:
                         plot = edge_probas_lines(data = data_frame_edge, threshold = edge_threshold, look_back = 500)
                         st.plotly_chart(plot , use_container_width=True)
+                        plot = get_rolling_probs(data=data_frame_edge, window=smooth_windown,look_back=700)
+                        st.plotly_chart(plot , use_container_width=True)
                     if conformal:
                         csv_name = f'{model_name}_{symbol_name}_conformal.csv'
                         conf_df = dowload_any_object(csv_name, f'edge_models/{model_name}/{symbol_name}/', 'csv', bucket)
                         fig = edge_conformal_lines(conf_df, [0.25,0.50,0.75], threshold=edge_threshold)
                         st.plotly_chart(fig , use_container_width=True)
+                        plot = get_rolling_probs(data=data_frame_edge, window=smooth_windown,look_back=700)
+                        st.plotly_chart(plot , use_container_width=True)
                     if explain:
                         csv_name = f'{model_name}_{symbol_name}_shap.csv'
                         df_shap = dowload_any_object(csv_name, f'edge_models/{model_name}/{symbol_name}/', 'csv', bucket)
