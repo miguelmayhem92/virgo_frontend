@@ -6,7 +6,7 @@ import datetime
 import boto3
 from io import BytesIO
 from virgo_modules.src.re_utils import produce_simple_ts_from_model, produce_signals
-from virgo_modules.src.edge_utils.edge_utils import edge_probas_lines
+from virgo_modules.src.edge_utils.edge_utils import edge_probas_lines, get_rolling_probs
 from virgo_modules.src.ticketer_source import  analyse_index
 from virgo_modules.src.backtester import SignalAnalyserObject
 from utils import logo, execute_edgemodel_lambda, reading_last_execution, get_connection, call_edge_json, dowload_any_object, signal_position_message
@@ -63,7 +63,7 @@ st.write(
 on_edge = st.toggle('Activate edge model')
 if on_edge:
     edge_threshold = st.slider('Edge threshold',30, 100, 40)/100
-
+    smooth_windown = st.slider('Smooth window',1, 30, 3)
 on_market_risk = st.toggle('Activate market risk')
 if on_market_risk:
     market_indexes = configs["market_indexes"]
@@ -207,6 +207,8 @@ if st.button('Launch'):
 
                 try:
                     plot = edge_probas_lines(data = data_frame, threshold = edge_threshold, look_back = 500)
+                    st.plotly_chart(plot , use_container_width=True)
+                    plot = get_rolling_probs(data=data_frame, window=smooth_windown,look_back=700)
                     st.plotly_chart(plot , use_container_width=True)
                 except:
                     st.write("no plot available :(")
