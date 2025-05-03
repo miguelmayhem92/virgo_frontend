@@ -19,7 +19,7 @@ interpret==0.6.4
 scipy==1.10.0
 seaborn==0.12.2
 starlette==0.22.0
-yfinance==0.2.54
+yfinance==0.2.58
 ta==0.10.2
 statsmodels==0.13.5
 hmmlearn == 0.3.0
