@@ -78,7 +78,7 @@ if on_edge:
     edge_threshold = st.slider('Edge threshold',30, 100, 40)/100
     smooth_windown = st.slider('Smooth window',1, 30, 3)
     conformal = st.checkbox("Conformal prediction")
-    explain = st.checkbox("Explain")
+    # explain = st.checkbox("Explain")
 
 on_market_risk = st.toggle('Activate market risk')
 if on_market_risk:
@@ -277,12 +277,12 @@ if st.button('Launch'):
                         st.plotly_chart(fig , use_container_width=True)
                         plot = get_rolling_probs(data=data_frame_edge, window=smooth_windown,look_back=700)
                         st.plotly_chart(plot , use_container_width=True)
-                    if explain:
-                        csv_name = f'{model_name}_{symbol_name}_shap.csv'
-                        df_shap = dowload_any_object(csv_name, f'edge_models/{model_name}/{symbol_name}/', 'csv', bucket)
-                        st.markdown('#### exaplainer:')
-                        fig = edge_shap_lines(data=df_shap.drop(columns = ['Unnamed: 0']))
-                        st.plotly_chart(fig , use_container_width=True)
+                    # if explain:
+                    #     csv_name = f'{model_name}_{symbol_name}_shap.csv'
+                    #     df_shap = dowload_any_object(csv_name, f'edge_models/{model_name}/{symbol_name}/', 'csv', bucket)
+                    #     st.markdown('#### exaplainer:')
+                    #     fig = edge_shap_lines(data=df_shap.drop(columns = ['Unnamed: 0']))
+                    #     st.plotly_chart(fig , use_container_width=True)
                 except:
                     st.write("no plot available :(")
         with tab_market_risk:
