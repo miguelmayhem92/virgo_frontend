@@ -13,7 +13,7 @@ from virgo_modules.src.ticketer_source import  analyse_index
 from virgo_modules.src.backtester import SignalAnalyserObject
 from virgo_modules.src.edge_utils.edge_utils import edge_probas_lines, get_rolling_probs
 from virgo_modules.src.edge_utils.conformal_utils import edge_conformal_lines
-from virgo_modules.src.edge_utils.shap_utils import edge_shap_lines
+# from virgo_modules.src.edge_utils.shap_utils import edge_shap_lines
 
 from utils import logo, reading_last_execution, dowload_any_object, signal_position_message
 from utils import perf_metrics_message, get_categorical_targets
@@ -226,7 +226,7 @@ if st.button('Launch'):
                     probas['Date'] = pd.to_datetime(probas['Date'])
                     edge_signals = produce_signals(probas, edge_name, edge_threshold, label_prediction)
                     new_signal_list = ['Date','proba_target_down','proba_target_up',f'signal_up_{model_name}_edge',f'acc_up_{model_name}_edge',f'signal_low_{model_name}_edge',f'acc_low_{model_name}_edge']
-                    data_frame_edge = data_frame.merge(edge_signals[new_signal_list], on = 'Date', how = 'left')
+                    data_frame_edge = data_frame.merge(edge_signals[new_signal_list], on = 'Date', how = 'outer')
                     sao = SignalAnalyserObject(data_frame_edge, symbol_name, edge_name,test_size = 250, signal_position = late_opening, save_path = False, save_aws = False,
                                             show_plot = False, aws_credentials = False, return_fig = True)  
                     fig = sao.signal_analyser(days_list = [7,15,30])
