@@ -16,6 +16,8 @@ multi_symbols:
   - "starting-high"
   - "down_tickers"
   - "sirius_distribution"
+  - "sirius_by_proba_target_up"
+  - "sirius_by_proba_target_down"
 market_plots:
   - "panel signals": 
       name : "panel_signals.json"
