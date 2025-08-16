@@ -13,6 +13,8 @@ from virgo_modules.src.ticketer_source import  analyse_index
 from virgo_modules.src.backtester import SignalAnalyserObject
 from virgo_modules.src.edge_utils.edge_utils import edge_probas_lines, get_rolling_probs
 from virgo_modules.src.edge_utils.conformal_utils import edge_conformal_lines
+from virgo_modules.src.market.market_tools import MarketAnalysis
+from virgo_modules.src.ticketer_source import stock_eda_panel
 # from virgo_modules.src.edge_utils.shap_utils import edge_shap_lines
 
 from utils import logo, reading_last_execution, dowload_any_object, signal_position_message
@@ -84,11 +86,6 @@ on_market_risk = st.toggle('Activate market risk')
 if on_market_risk:
     market_indexes = configs["market_indexes"]
     market_indexes = {k:v for list_item in market_indexes for (k,v) in list_item.items() if v != '^VIX'}
-    market_indexes_ = ['DEFAULT'] + list(market_indexes.keys())
-    market_index = st.selectbox(
-        'select one option',
-        tuple(market_indexes_)
-    )
     inv_market_indexes = {v:k for k,v in market_indexes.items()}
 
 exit_params = {
@@ -287,34 +284,25 @@ if st.button('Launch'):
                     st.write("no plot available :(")
         with tab_market_risk:
             if on_market_risk:
-                my_error = False
-                if market_index == 'DEFAULT':
-                    try:
-                        market_betas = dowload_any_object(file_name = 'betas_market.csv', folder = 'market_betas/', file_type = 'csv', bucket = 'virgo-data').iloc[:,1:]
-                        asset_beta = market_betas[market_betas.asset == symbol_name].sort_values('rank')
-                        market_index_symbol = asset_beta[asset_beta['rank'] == 1].market_index.values[0]
-                    except:
-                        my_error = 'no best beta available :(, use another option'
-                else:
-                    market_index_symbol = market_indexes[market_index]
-                if not my_error:
-                    lag = 2
-                    n_obs = 3500
-                    window_size = '15y'
-
-                    aiv = analyse_index(index_data = market_index_symbol, asset = symbol_name, n_obs = n_obs, lag = lag, data_window = window_size, return_fig = True, show_plot = False)
-                    aiv.process_data()
-                    fig = aiv.plot_betas(sample_size = 30, offset = 5, subsample_ts =False)
-                    st.pyplot(fig)
-
-                    aiv.get_betas(subsample_ts=30)
-                    betas_result = aiv.states_result
-                    for i,_ in enumerate(betas_result):
-                        betas_result[i]['index'] = inv_market_indexes.get(betas_result[i]['index'])
-
-                    st.write(betas_result)
-                else:
-                    st.write(my_error)
-
+                market_symbols = list(inv_market_indexes.keys())
+                object_stock = stock_eda_panel(symbol_name , 3500, '15y')
+                object_stock.get_data()
+                object_stock.volatility_analysis(lags = 3, trad_days = 15, window_log_return = 10, plot = False, save_features = False)
+                feat_list = list()
+                for symbol in market_symbols:
+                    simple_name = inv_market_indexes.get(symbol)
+                    feat_name = simple_name + "_return"
+                    object_stock.extract_sec_data(symbol, ["Date","Close"], {"Close":simple_name})
+                    object_stock.lag_log_return(lags = 3, feature=simple_name, feature_name=feat_name)
+                    feat_list.append(feat_name)
+                ma = MarketAnalysis(object_stock.df, feat_list, "log_return")
+                general_report, current_report, figure = ma.compute_general_report(sample_size=20, offset=5, index=False, subsample_ts=500, show_plot=False)
+                st.write("the market analysis uses multiple market indexes and robut linear regression to get beta")
+                st.write("general report")
+                st.dataframe(general_report)
+                st.write("latest report")
+                st.dataframe(current_report)
+                st.write("visualizations")
+                st.pyplot(figure)
 
 st.button("Re-run")
