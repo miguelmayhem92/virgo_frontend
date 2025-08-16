@@ -297,7 +297,7 @@ if st.button('Launch'):
                     feat_list.append(feat_name)
                 ma = MarketAnalysis(object_stock.df, feat_list, "log_return")
                 general_report, current_report, figure = ma.compute_general_report(sample_size=20, offset=5, index=False, subsample_ts=500, show_plot=False)
-                st.write("the market analysis uses multiple market indexes and robut linear regression to get beta")
+                st.write("the market analysis uses multiple market indexes and robust linear regression to get beta")
                 st.write("general report")
                 st.dataframe(general_report)
                 st.write("latest report")
