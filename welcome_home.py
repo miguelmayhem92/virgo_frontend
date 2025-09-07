@@ -1,6 +1,7 @@
 import streamlit as st
 from utils import logo
-from auth_utils import menu
+# from auth_utils import menu, menu_with_redirect
+from auth_utils_cognito import menu
 from pathlib import Path
 import yaml
 from st_pages import  get_nav_from_toml
@@ -10,8 +11,12 @@ debug_mode = configs["debug_mode"]
 
 st.set_page_config(layout="wide")
 logo(debug_mode)
-menu()
-
+try:
+    if st.session_state.authenticated == True:
+        menu()
+except:
+    st.switch_page("pages/virgo_signin.py")
+    
 
 st.write("# Welcome to Virgo! 📈")
 

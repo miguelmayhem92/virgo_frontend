@@ -6,7 +6,7 @@ from pathlib import Path
 from utils import get_connection
 from utils import logo
 import time
-from auth_utils import menu_with_redirect
+from auth_utils_cognito import menu_with_redirect
 
 configs = yaml.safe_load(Path('configs.yaml').read_text())
 debug_mode = configs["debug_mode"]
