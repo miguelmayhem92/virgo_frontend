@@ -54,6 +54,19 @@ signals:
   - "ROC": "ROC"
   - 'STOCHOSC': 'STOCHOSC'
 
+guest_symbols:
+  - "S&P 500" : "^GSPC"
+  - "NASDAQ" : "^IXIC"
+  - "BITCOIN-USD": "BTC-USD"
+  - "ETHERIUM-USD": "ETH-USD"
+  - "TESLA": "TSLA"
+  - "APPL": "AAPL"
+  - "BLACKROCK": "BLK"
+  - "NVIDIA": "NVDA"
+  - "MICROSOFT": "MSFT"
+
+guest_symbol_map:
+  - "S&P 500" : "market"
 
 local_tmps: "C:/Users/Miguel/virgo_api/research_env/tmp_plots"
 local_tmps_market_research: "C:/Users/Miguel/virgo_api/research_env/tmp_plots/tmp_market"  

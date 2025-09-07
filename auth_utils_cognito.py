@@ -17,28 +17,28 @@ def get_secret_hash(username):
     return d2
 
 def authenticate_user(username, password):
-    #try:
-    response = cognito_client.initiate_auth(
-        ClientId=st.secrets["CLIENT_ID"],
-        AuthFlow='USER_PASSWORD_AUTH',
-        AuthParameters={'USERNAME': username, 'PASSWORD': password, "SECRET_HASH": get_secret_hash(username)}
-        )
+    try:
+        response = cognito_client.initiate_auth(
+            ClientId=st.secrets["CLIENT_ID"],
+            AuthFlow='USER_PASSWORD_AUTH',
+            AuthParameters={'USERNAME': username, 'PASSWORD': password, "SECRET_HASH": get_secret_hash(username)}
+            )
     
-    if response:
-        # getting user group
-        response_user_group = cognito_client.admin_list_groups_for_user(
-            Username = username,
-            UserPoolId = st.secrets["USER_POOL_ID"],
-            Limit=2,
-        )
-        user_group =[x["GroupName"] for x in response_user_group["Groups"]][0]
-        st.write(f"welcome: {username}")
-        st.write(f"you are: {user_group}")
-    return user_group
-    # except cognito_client.exceptions.NotAuthorizedException:
-    #     st.error("Invalid username or password.")
-    # except Exception as e:
-    #     st.error(str(e)) # type: ignore
+        if response:
+            # getting user group
+            response_user_group = cognito_client.admin_list_groups_for_user(
+                Username = username,
+                UserPoolId = st.secrets["USER_POOL_ID"],
+                Limit=2,
+            )
+            user_group =[x["GroupName"] for x in response_user_group["Groups"]][0]
+            st.write(f"welcome: {username}")
+            st.write(f"you are: {user_group}")
+            return user_group
+    except cognito_client.exceptions.NotAuthorizedException:
+        st.error("Invalid username or password.")
+    except Exception as e:
+        st.error(str(e)) # type: ignore
 
 def verify_auth_code(username, auth_code):
     try:
@@ -53,7 +53,7 @@ def verify_auth_code(username, auth_code):
             return response
     except cognito_client.exceptions.CodeMismatchException:
         st.error("Invalid auth code")
-        return "pass"
+        return False
     except cognito_client.exceptions.ExpiredCodeException:
         st.error("user is already verified or expired code")
     except Exception as e:
@@ -87,7 +87,7 @@ def _check_password():
         username = st.text_input("Username")
         password = st.text_input("Password", type="password")
         submitted = st.form_submit_button("Log in")
-        submitted_forguet = st.form_submit_button("forguet password")
+        submitted_forguet = st.form_submit_button("Forgot password?")
     if submitted:
         user_group = authenticate_user(username, password)
         if user_group:
@@ -104,12 +104,12 @@ def _register_new_user():
     with st.form("Signup Credentials"):
         username = st.text_input("Username")
         password = st.text_input("Password", type="password")
-        submitted = st.form_submit_button("signup")
+        submitted = st.form_submit_button("sign up")
     if submitted and username and password:
         confirmation = create_user(username, password)
         if confirmation == False:
             st.write("A verification code was sent to the email address")
-            st.write("A you can verify user in verification tab")
+            st.write("Now you can verify user in verification tab")
         else:
             st.error("user is already registered from streamlit")
 
@@ -127,9 +127,9 @@ def _verify_user():
                 st.rerun()
         
 def _login_signup():
-    with st.popover("Login"):
+    with st.popover("Sign in"):
         activated = _check_password()
-    with st.popover("Signup"):
+    with st.popover("Sign up"):
         _register_new_user()
     with st.popover("Verify user"):
         _verify_user()
