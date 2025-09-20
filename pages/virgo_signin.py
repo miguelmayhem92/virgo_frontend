@@ -11,6 +11,11 @@ debug_mode = configs["debug_mode"]
 
 st.set_page_config(layout="wide")
 logo(debug_mode)
-st.title("Login or register")
+
+st.write("# Welcome to Virgo! 📈")
+
+st.write("## Login or register")
+
+st.text("Virgo is an statistical arbitrage app that is meant to mine investing oportunities in financial markets.")
 
 submenu()
