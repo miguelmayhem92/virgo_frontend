@@ -1,3 +1,4 @@
+import time
 import boto3
 import streamlit as st
 import boto3
@@ -78,6 +79,35 @@ def create_user(username, password):
     except Exception as e:
             st.error(str(e))
 
+def auth_code_forgot_password(username):
+    try:
+        response = cognito_client.forgot_password(
+            ClientId=st.secrets["CLIENT_ID"],
+            SecretHash=get_secret_hash(username),
+            Username=username,
+        )
+        if response:
+            return response
+    except Exception as e:
+        st.error(str(e))
+        return False
+
+
+def reset_password(username, new_password, auth_code):
+    try:
+        response = cognito_client.confirm_forgot_password(
+            ClientId=st.secrets["CLIENT_ID"],
+            SecretHash=get_secret_hash(username),
+            Username=username,
+            ConfirmationCode=auth_code,
+            Password=new_password
+        )
+        if response:
+            return response
+    except Exception as e:
+        st.error(str(e))
+        return False
+
 def _check_password():
     """Authenticate user and manage login state."""
     if st.session_state.get("authenticated"):
@@ -87,7 +117,6 @@ def _check_password():
         username = st.text_input("Username")
         password = st.text_input("Password", type="password")
         submitted = st.form_submit_button("Log in")
-        submitted_forguet = st.form_submit_button("Forgot password?")
     if submitted:
         user_group = authenticate_user(username, password)
         if user_group:
@@ -125,14 +154,34 @@ def _verify_user():
             backhome = st.button("home")
             if backhome:
                 st.rerun()
+
+def _forgot_password():
+    with st.form("forgot password"):
+        username = st.text_input("Username")
+        new_password = st.text_input("New Password", type="password")
+        auth_code = st.text_input("Auth code")
+        register = st.form_submit_button("Register password")
+        if register:
+            response= reset_password(username, new_password, auth_code)
+            if response:
+                st.write(f"new password is registered")
+        submited = st.form_submit_button("Send auth code to email")
+        if submited:
+            response = auth_code_forgot_password(username)
+            if response:
+                st.write(f"an auth code was sent to {username}")
+        
         
 def _login_signup():
     with st.popover("Sign in"):
         activated = _check_password()
+    with st.popover("Forgot password"):
+        _forgot_password()
     with st.popover("Sign up"):
         _register_new_user()
     with st.popover("Verify user"):
         _verify_user()
+    
     return activated
 
 def _logout():
