@@ -41,5 +41,5 @@ def filter_scale_ts(data, date, features,trad_days = 7,lags=3):
                     showlegend=False,
                     line = dict(color=color),
                     name=code),col=1,row=2)
-    fig.update_layout(height=700,width=1000)
+    fig.update_layout(height=700,width=1000,title="Time series view of multiple assets")
     return fig
