@@ -8,7 +8,6 @@ import time
 from io import BytesIO
 from virgo_modules.src.re_utils import produce_simple_ts_from_model, produce_signals
 from virgo_modules.src.edge_utils.edge_utils import edge_probas_lines, get_rolling_probs
-from virgo_modules.src.ticketer_source import  analyse_index
 from virgo_modules.src.backtester import SignalAnalyserObject
 from virgo_modules.src.market.market_tools import MarketAnalysis
 from virgo_modules.src.ticketer_source import stock_eda_panel
@@ -139,14 +138,6 @@ if st.button('Launch'):
                 plotter = produce_plotly_plots(symbol_name, data_frame,data_configs,save_path = False,save_aws = False,show_plot = False, return_figs = True)
 
                 for plot_name in options:
-
-                    # object = market_plots[plot_name]
-                    # name = object['name']
-                    # type_ = object['data_type']
-                    # method = object['method']
-
-                    # print_object(name, type_, index_symbol, debug_mode, local_storage, conn)
-
                     if plot_name == "panel signals":
                         features_ = ['volatility_log_return', 'rel_MA_spread', 'target_mean_dow','pair_z_score','RSI','ROC','STOCHOSC']
                         spread_column = 'relative_spread_ma'
@@ -203,45 +194,32 @@ if st.button('Launch'):
                         conn = get_connection()
                         streamlit_conn = True
 
-                    def edgemodel_lambda_execution(symbol_name):
-                        payload = {"asset": symbol_name}
-                        execute_edgemodel_lambda(payload)
-
+                    execute_edgemodel_lambda({
+                        'asset': symbol_name,
+                    })
+                    
                     try:
-                        aws_report_date = reading_last_execution('current_edge.json', f'edge_models/sirius/{symbol_name}/', 'ExecutionDate')
+                        model_name = 'sirius'
+                        edge_name = 'sirius_edge'
+                        csv_name = f'{model_name}_{symbol_name}_edges.csv'
+                        target_variables = ['target_down','target_up']
+                        label_prediction = ['proba_'+x for x in target_variables]
+                        
+                        probas = dowload_any_object(csv_name, f'edge_models/{model_name}/{symbol_name}/', 'csv', bucket)
+                        probas['Date'] = pd.to_datetime(probas['Date'])
+
+                        edge_signals = produce_signals(probas, edge_name, edge_threshold, label_prediction)
+
+                        new_signal_list = ['Date','proba_target_down','proba_target_up',f'signal_up_{model_name}_edge',f'acc_up_{model_name}_edge',f'signal_low_{model_name}_edge',f'acc_low_{model_name}_edge']
+                        data_frame = df.merge(edge_signals[new_signal_list], on = 'Date', how = 'left')
+
+                        sao = SignalAnalyserObject(data_frame, symbol_name, edge_name,test_size = 250, save_path = False, save_aws = False,
+                                                    show_plot = False, aws_credentials = False, return_fig = True)  
+                        fig = sao.signal_analyser(days_list = [7,15,30])
+                        st.pyplot(fig)
+
                     except:
-                        edgemodel_lambda_execution(symbol_name)
-                        aws_report_date = reading_last_execution('current_edge.json', f'edge_models/sirius/{symbol_name}/', 'ExecutionDate')
-
-                    print(f"execution_date: {execution_date}")
-                    print(f"aws_report_date: {aws_report_date}")
-
-                    if execution_date != aws_report_date:
-                        ## lambda execution if no available json 
-                        edgemodel_lambda_execution(symbol_name)
-                    
-                    # try:
-                    model_name = 'sirius'
-                    edge_name = 'sirius_edge'
-                    csv_name = f'{model_name}_{symbol_name}_edges.csv'
-                    target_variables = ['target_down','target_up']
-                    label_prediction = ['proba_'+x for x in target_variables]
-                    
-                    probas = dowload_any_object(csv_name, f'edge_models/{model_name}/{symbol_name}/', 'csv', bucket)
-                    probas['Date'] = pd.to_datetime(probas['Date'])
-
-                    edge_signals = produce_signals(probas, edge_name, edge_threshold, label_prediction)
-
-                    new_signal_list = ['Date','proba_target_down','proba_target_up',f'signal_up_{model_name}_edge',f'acc_up_{model_name}_edge',f'signal_low_{model_name}_edge',f'acc_low_{model_name}_edge']
-                    data_frame = df.merge(edge_signals[new_signal_list], on = 'Date', how = 'left')
-
-                    sao = SignalAnalyserObject(data_frame, symbol_name, edge_name,test_size = 250, save_path = False, save_aws = False,
-                                                show_plot = False, aws_credentials = False, return_fig = True)  
-                    fig = sao.signal_analyser(days_list = [7,15,30])
-                    st.pyplot(fig)
-
-                    # except:
-                    #     st.write("no data available :(")
+                        st.write("no data available :(")
 
                     try:
                         call_edge_json(file_name = 'current_edge.json', conn = conn, dict_keys = ['probability go down','probability go up'],

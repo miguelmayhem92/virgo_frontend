@@ -189,27 +189,12 @@ if st.button('Launch'):
                     conn = get_connection()
                     streamlit_conn = True
 
-                def edgemodel_lambda_execution(symbol_name):
-                    payload = {
+                execute_edgemodel_lambda({
                         'asset': symbol_name,
                         'conformal': True,
                         'interpret': True,
-                    }
-                    execute_edgemodel_lambda(payload)
+                })
 
-                try:
-                    aws_report_date = reading_last_execution('current_edge.json', f'edge_models/sirius/{symbol_name}/', 'ExecutionDate')
-                except:
-                    edgemodel_lambda_execution(symbol_name)
-                    aws_report_date = reading_last_execution('current_edge.json', f'edge_models/sirius/{symbol_name}/', 'ExecutionDate')
-
-                print(f"execution_date: {execution_date}")
-                print(f"aws_report_date: {aws_report_date}")
-
-                if execution_date != aws_report_date:
-                    ## lambda execution if no available json 
-                    edgemodel_lambda_execution(symbol_name)
-                
                 try:
                     model_name = 'sirius'
                     edge_name = 'sirius_edge'
@@ -270,16 +255,18 @@ if st.button('Launch'):
                     if conformal:
                         csv_name = f'{model_name}_{symbol_name}_conformal.csv'
                         conf_df = dowload_any_object(csv_name, f'edge_models/{model_name}/{symbol_name}/', 'csv', bucket)
+                        conf_df['Date'] = pd.to_datetime(conf_df['Date'])
+                        conf_df = data_frame_edge.merge(conf_df, on = 'Date', how = 'outer')
                         fig = edge_conformal_lines(conf_df, [0.25,0.50,0.75], threshold=edge_threshold)
                         st.plotly_chart(fig , use_container_width=True)
                         plot = get_rolling_probs(data=data_frame_edge, window=smooth_windown,look_back=700)
                         st.plotly_chart(plot , use_container_width=True)
-                    # if explain:
-                    #     csv_name = f'{model_name}_{symbol_name}_shap.csv'
-                    #     df_shap = dowload_any_object(csv_name, f'edge_models/{model_name}/{symbol_name}/', 'csv', bucket)
-                    #     st.markdown('#### exaplainer:')
-                    #     fig = edge_shap_lines(data=df_shap.drop(columns = ['Unnamed: 0']))
-                    #     st.plotly_chart(fig , use_container_width=True)
+                        # if explain:
+                        #     csv_name = f'{model_name}_{symbol_name}_shap.csv'
+                        #     df_shap = dowload_any_object(csv_name, f'edge_models/{model_name}/{symbol_name}/', 'csv', bucket)
+                        #     st.markdown('#### exaplainer:')
+                        #     fig = edge_shap_lines(data=df_shap.drop(columns = ['Unnamed: 0']))
+                        #     st.plotly_chart(fig , use_container_width=True)
                 except:
                     st.write("no plot available :(")
         with tab_market_risk:
