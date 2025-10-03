@@ -198,6 +198,7 @@ def _authenticated_menu():
         st.sidebar.page_link("pages/markets.py", label="Markets")
         st.sidebar.page_link("pages/multiple_symbols.py", label="Batches")
         st.sidebar.page_link("pages/portfolio_dive.py", label="Portfolio")
+        st.sidebar.page_link("pages/guest_explore.py", label="Explore assets")
     elif st.session_state.role == 'guest':
         st.sidebar.page_link("pages/guest_explore.py", label="Explore assets")
 
