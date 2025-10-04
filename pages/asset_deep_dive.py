@@ -115,21 +115,7 @@ if st.button('Launch'):
             local_storage = False
             streamlit_conn = True
         
-        def asset_lambda_execution(symbol_name):
-            payload = {'asset' : symbol_name}
-            execute_asset_lambda(payload)
-    
-        try:
-            aws_report_date = reading_last_execution('execution.json', f'market_plots/{symbol_name}/', 'ExecutionDate')
-        except:
-            asset_lambda_execution(symbol_name)
-            aws_report_date = reading_last_execution('execution.json', f'market_plots/{symbol_name}/', 'ExecutionDate')
-
-        print(f"execution_date: {execution_date}")
-        print(f"aws_report_date: {aws_report_date}")
-        if execution_date != aws_report_date:
-            ## lambda execution if no available json 
-            asset_lambda_execution(symbol_name)
+        execute_asset_lambda({'asset' : symbol_name})
             
         data_frame = dowload_any_object('dataframe.csv', f'market_plots/{symbol_name}/', 'csv',bucket)
         t_matrix = dowload_any_object('tmatrix.txt', f'market_plots/{symbol_name}/', 'txt', bucket)
