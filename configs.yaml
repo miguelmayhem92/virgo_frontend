@@ -15,9 +15,12 @@ multi_symbols:
   - "top-low"
   - "starting-high"
   - "down_tickers"
-  - "sirius_distribution"
-  - "sirius_by_proba_target_up"
-  - "sirius_by_proba_target_down"
+  - "sirius"
+multi_symbols_sirius:
+  - "{type_asset}-sirius_by_proba_target_up"
+  - "{type_asset}-sirius_by_proba_target_down"
+  - "{type_asset}-sirius_distribution"
+
 market_plots:
   - "panel signals": 
       name : "panel_signals.json"

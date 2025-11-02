@@ -1,8 +1,9 @@
 from io import BytesIO
-import base64
+import datetime
+from dateutil.relativedelta import relativedelta
 from PIL import Image
 import yaml
-import pandas as pd
+
 from pathlib import Path
 import seaborn as sns
 import streamlit as st
@@ -39,7 +40,10 @@ if st.button("add"):
 lags_short = st.number_input('short term lag', 3)
 lags_mid= st.number_input('mid term lag', 7)
 trade_days = st.number_input('trading days', 7)
-begin_date = st.text_input('Begin date', '2025-01-01')
+
+date_back = datetime.datetime.now() - relativedelta(days=100)
+date_back_str = date_back.strftime("%Y-%m-%d")
+begin_date = st.text_input('Begin date', date_back_str)
 
 tab_overview,_ = st.tabs(['overview',"edges(soon)"])
 
