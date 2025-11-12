@@ -12,9 +12,9 @@ market_indexes:
   - "Euronext 100" : "^N100"
   - "DAX" : "^GDAXI"
 multi_symbols:
-  - "top-low"
-  - "starting-high"
-  - "down_tickers"
+  - "top_low-top-low"
+  - "top_up-starting-high"
+  - "fall-down_tickers"
   - "sirius"
 multi_symbols_sirius:
   - "{type_asset}-sirius_by_proba_target_up"
