@@ -3,19 +3,25 @@ import datetime
 from dateutil.relativedelta import relativedelta
 from PIL import Image
 import yaml
+import time
 
 from pathlib import Path
 import seaborn as sns
 import streamlit as st
 import matplotlib.pyplot as plt
-from utils import logo
+from utils import logo, execute_state_machine_allocator, dowload_any_object
 from auth_utils_cognito import menu_with_redirect
 
 from virgo_modules.src.ticketer_source import stock_eda_panel
 from tooling.portfolio_utils import return_matrix, filter_scale_ts
+from tooling.portfolio_utils import plot_individual_allocations, benchmark_allocations
 
 configs = yaml.safe_load(Path('configs.yaml').read_text())
 debug_mode = configs["debug_mode"]
+bucket = 'virgo-data'
+EXECUTE_AFTER = 2
+targets = ["optimal_asset_future_return","optimal_bench1_future_return","optimal_bench2_future_return","optimal_bench3_future_return",
+        "optimal_bench4_future_return","optimal_bench5_future_return"]
 
 st.set_page_config(layout="wide")
 logo(debug_mode)
@@ -45,7 +51,9 @@ date_back = datetime.datetime.now() - relativedelta(days=100)
 date_back_str = date_back.strftime("%Y-%m-%d")
 begin_date = st.text_input('Begin date', date_back_str)
 
-tab_overview,_ = st.tabs(['overview',"edges(soon)"])
+on_allocator = st.toggle('Activate allocator model')
+
+tab_overview, edges = st.tabs(['overview',"edges"])
 
 if st.button("run"):
     with st.spinner('.......................... Now loading ..........................'):
@@ -99,4 +107,41 @@ if st.button("run"):
             # time series and volatility
             plot=filter_scale_ts(object_stock.df, begin_date, tickers,trad_days = trade_days,lags=lags_short)
             st.plotly_chart(plot, use_container_width=True)
+        with edges:
+            if on_allocator:
+                allocator_name = "_".join(tickers) + "_andromeda_edges.csv"
+                sirius_name = "_".join(tickers) + "_sirius_edges.csv"
+                folder_concat = "_".join(tickers)
+
+                def get_execution_time():
+                    try:
+                        execution = dowload_any_object("time_execution.json", f'edge_models/andromeda/consolidate/{folder_concat}/', 'json', bucket)
+                        execution_time_str = execution.get("execution_time") # str
+                        execution_time = datetime.strptime(execution_time_str, '%Y-%m-%d:%H:%M:%S')
+                        current_execution_time = datetime.datetime.now()
+                        elapsed_time = current_execution_time - execution_time
+                        hours_elapsed = divmod(elapsed_time.total_seconds(), 60*60)[0]
+                    except:
+                        hours_elapsed=24
+                    return hours_elapsed
+                
+                hours_elapsed = get_execution_time()
+                if hours_elapsed > EXECUTE_AFTER:
+                    execute_state_machine_allocator({"asset_list":tickers})
+                for i in range(15):
+                    hours_elapsed = get_execution_time()
+                    if hours_elapsed < EXECUTE_AFTER:
+                        time.sleep(15)
+                        print(f"waiting stepmachine to finish {i}")
+                        continue
+                    else:
+                        print("done! step machine finished")
+                        allocator_df = dowload_any_object(allocator_name, f'edge_models/andromeda/consolidate/', 'csv', bucket)
+                        sirius_df = dowload_any_object(sirius_name, f'edge_models/andromeda/consolidate/', 'csv', bucket)
+                        break
+                # producing dashboards!!!
+                fig1 = plot_individual_allocations(allocator_df, tickers)
+                fig2 = benchmark_allocations(allocator_df, targets)
+                st.plotly_chart(fig1, use_container_width=True)
+                st.plotly_chart(fig2, use_container_width=True)
 

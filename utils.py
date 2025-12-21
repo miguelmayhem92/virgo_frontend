@@ -3,6 +3,8 @@ import streamlit as st
 from PIL import Image
 import boto3
 import io
+import time
+import uuid
 from streamlit_extras.app_logo import add_logo
 import plotly
 import json
@@ -59,6 +61,25 @@ def execute_edgemodel_lambda(payload):
             print(result["body"])
     except:
         st.error('error with lambda execution', icon="🚨")
+
+def execute_state_machine_allocator(payload):
+    load_str = json.dumps(payload)
+    payload = {
+        "input": load_str,
+        "name": str(uuid.uuid1()),
+        "stateMachineArn": st.secrets['allocator_state_machine_arn']
+    }
+    url = st.secrets['call_state_machine_allocator']
+    headers = {'X-API-Key': st.secrets['api_key']}
+    response = requests.post(url, json  = payload, headers=headers)
+    result = json.loads(response.text)
+    time.sleep(10)
+
+def read_state_machine_allocator():
+    session = boto3.Session(aws_access_key_id=st.secrets['AWS_ACCESS_KEY_ID'],aws_secret_access_key=st.secrets['AWS_SECRET_ACCESS_KEY'])
+    s3_resource = session.resource('s3')
+    bucket = s3_resource.Bucket('virgo-data')
+    
 
 def reading_last_execution(file_name: str, folder_path: str, date_key:str):
     """
