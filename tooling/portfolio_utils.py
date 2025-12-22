@@ -72,16 +72,18 @@ def plot_individual_allocations(data,stock_codes, window=300):
                     subplot_titles=["Prices", "estimations","observed"],vertical_spacing=0.08)
     n_colors= len(COLOR_LIST)
     for i,asset in enumerate(stock_codes):
-        i = i%n_colors
-        color = COLOR_LIST[i]
-        df = data[data["asset"]==asset].sort_values("Date").iloc[-window:]
-        init = df["Close"].iloc[0]
-        fig.add_trace(go.Scatter(x=df["Date"],y=df["Close"]/init,name=asset, showlegend=True,legendgroup=asset,line_color=color), row=1, col=1)
-        feature = f"hat_optimal_asset_future_return"
-        fig.add_trace(go.Scatter(x=df["Date"],y=df[feature],name=asset,legendgroup=asset,line_color=color, showlegend=False), row=2, col=1)
-        feature = f"optimal_asset_future_return"
-        fig.add_trace(go.Scatter(x=df["Date"],y=df[feature],name=asset,legendgroup=asset,line_color=color, showlegend=False), row=3, col=1)
-    
+        try:
+            i = i%n_colors
+            color = COLOR_LIST[i]
+            df = data[data["asset"]==asset].sort_values("Date").iloc[-window:]
+            init = df["Close"].iloc[0]
+            fig.add_trace(go.Scatter(x=df["Date"],y=df["Close"]/init,name=asset, showlegend=True,legendgroup=asset,line_color=color), row=1, col=1)
+            feature = f"hat_optimal_asset_future_return"
+            fig.add_trace(go.Scatter(x=df["Date"],y=df[feature],name=asset,legendgroup=asset,line_color=color, showlegend=False), row=2, col=1)
+            feature = f"optimal_asset_future_return"
+            fig.add_trace(go.Scatter(x=df["Date"],y=df[feature],name=asset,legendgroup=asset,line_color=color, showlegend=False), row=3, col=1)
+        except:
+            continue
     fig.update_layout(height=+900, width=1200, title_text="Individual candidate allocations")
     return fig
 
