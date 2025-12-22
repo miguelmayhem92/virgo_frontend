@@ -123,7 +123,7 @@ if st.button("run"):
                     try:
                         execution = dowload_any_object("time_execution.json", f'edge_models/andromeda/consolidate/{folder_concat}/', 'json', bucket)
                         execution_time_str = execution.get("execution_time") # str
-                        execution_time = datetime.strptime(execution_time_str, '%Y-%m-%d:%H:%M:%S')
+                        execution_time = datetime.datetime.strptime(execution_time_str, '%Y-%m-%d:%H:%M:%S')
                         current_execution_time = datetime.datetime.now()
                         elapsed_time = current_execution_time - execution_time
                         hours_elapsed = divmod(elapsed_time.total_seconds(), 60*60)[0]
@@ -133,13 +133,15 @@ if st.button("run"):
                         return hours_elapsed
                 
                 hours_elapsed = get_execution_time()
+               
                 if hours_elapsed > EXECUTE_AFTER:
+                    print("launch step machine")
                     execute_state_machine_allocator({"asset_list":tickers})
-                for i in range(15):
+                for i in range(10):
                     hours_elapsed = get_execution_time()
-                    if hours_elapsed < EXECUTE_AFTER:
+                    if hours_elapsed > EXECUTE_AFTER:
                         time.sleep(15)
-                        print(f"waiting stepmachine to finish {i}")
+                        print(f"waiting stepmachine to finish {i}, {hours_elapsed}")
                         continue
                     else:
                         print("done! step machine finished")
