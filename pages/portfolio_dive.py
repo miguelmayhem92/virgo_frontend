@@ -14,7 +14,7 @@ from auth_utils_cognito import menu_with_redirect
 
 from virgo_modules.src.ticketer_source import stock_eda_panel
 from tooling.portfolio_utils import return_matrix, filter_scale_ts
-from tooling.portfolio_utils import plot_individual_allocations, benchmark_allocations
+from tooling.portfolio_utils import plot_individual_allocations, benchmark_allocations, sirius_in_allocator_plot
 
 configs = yaml.safe_load(Path('configs.yaml').read_text())
 debug_mode = configs["debug_mode"]
@@ -22,6 +22,10 @@ bucket = 'virgo-data'
 EXECUTE_AFTER = 2
 targets = ["optimal_asset_future_return","optimal_bench1_future_return","optimal_bench2_future_return","optimal_bench3_future_return",
         "optimal_bench4_future_return","optimal_bench5_future_return"]
+map_targets = {
+    "proba_target_down":"proba_go_up",
+    "proba_target_up":"proba_go_down",
+}
 
 st.set_page_config(layout="wide")
 logo(debug_mode)
@@ -53,7 +57,7 @@ begin_date = st.text_input('Begin date', date_back_str)
 
 on_allocator = st.toggle('Activate allocator model')
 
-tab_overview, edges = st.tabs(['overview',"edges"])
+tab_overview, allocation, sirius = st.tabs(['overview',"allocation", "sirius"])
 
 if st.button("run"):
     with st.spinner('.......................... Now loading ..........................'):
@@ -107,8 +111,10 @@ if st.button("run"):
             # time series and volatility
             plot=filter_scale_ts(object_stock.df, begin_date, tickers,trad_days = trade_days,lags=lags_short)
             st.plotly_chart(plot, use_container_width=True)
-        with edges:
-            if on_allocator:
+            succcess_main_page = True
+
+        with allocation:
+            if on_allocator and succcess_main_page:
                 allocator_name = "_".join(tickers) + "_andromeda_edges.csv"
                 sirius_name = "_".join(tickers) + "_sirius_edges.csv"
                 folder_concat = "_".join(tickers)
@@ -121,9 +127,10 @@ if st.button("run"):
                         current_execution_time = datetime.datetime.now()
                         elapsed_time = current_execution_time - execution_time
                         hours_elapsed = divmod(elapsed_time.total_seconds(), 60*60)[0]
+                        return hours_elapsed
                     except:
                         hours_elapsed=24
-                    return hours_elapsed
+                        return hours_elapsed
                 
                 hours_elapsed = get_execution_time()
                 if hours_elapsed > EXECUTE_AFTER:
@@ -144,4 +151,9 @@ if st.button("run"):
                 fig2 = benchmark_allocations(allocator_df, targets)
                 st.plotly_chart(fig1, use_container_width=True)
                 st.plotly_chart(fig2, use_container_width=True)
+            
+        with sirius:
+            if on_allocator and succcess_main_page:
+                fig3 =sirius_in_allocator_plot(sirius_df, map_targets)
+                st.plotly_chart(fig3, use_container_width=True)
 

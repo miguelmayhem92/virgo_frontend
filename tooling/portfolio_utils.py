@@ -1,3 +1,5 @@
+import gc
+
 import numpy as np
 import matplotlib.pyplot as plt
 import plotly.graph_objects as go
@@ -147,4 +149,22 @@ def benchmark_allocations(data,target_variables, window=300):
         fig.add_trace(go.Scatter(x=aggr["Date"],y=aggr[f"q75_{feature}"],name=tag,legendgroup=tag, showlegend=False,line_color=color), row=3, col=1)
         
     fig.update_layout(height=900, width=1200, title_text="benchmarks candidate allocations")
+    return fig
+
+def sirius_in_allocator_plot(data_plot,map_targets, data_window=550, window=4):
+    n_colors= len(COLOR_LIST)
+    fig = make_subplots(
+        rows=len(map_targets.keys()), cols=1, shared_xaxes=True,subplot_titles=[f"smooth {v}" for k,v in map_targets.items()],
+            vertical_spacing=0.08)
+    for j,asset_name in enumerate(data_plot.asset.unique()):
+        j = j%n_colors
+        color = COLOR_LIST[j]
+        df = data_plot[data_plot.asset == asset_name].iloc[-data_window:].copy()
+        for rowi,target in enumerate(map_targets.keys()):
+            legend = True if rowi == 0 else False 
+            df[f"smooth_{target}"] = df.sort_values("Date")[target].rolling(window,min_periods=1).mean()
+            fig.add_trace(go.Scatter(x=df["Date"],y=df[f"smooth_{target}"],name=asset_name,legendgroup=asset_name, showlegend=legend,line_color=color), row=rowi+1, col=1)
+        del df
+        gc.collect()
+    fig.update_layout(height=800, width=1200, title_text="sirius smoothed probabilities")
     return fig
