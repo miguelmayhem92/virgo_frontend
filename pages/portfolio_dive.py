@@ -150,7 +150,7 @@ if st.button("run"):
                         break
                 # producing dashboards!!!
                 fig1 = pie_plots_candidates(allocator_df, tickers)
-                fig2 = pie_plots_benchmarks(allocator_df, tickers)
+                fig2 = pie_plots_benchmarks(allocator_df, targets)
                 fig3 = plot_ts_allocations(allocator_df,tickers, targets)
                 st.plotly_chart(fig1, use_container_width=True)
                 st.plotly_chart(fig2, use_container_width=True)
