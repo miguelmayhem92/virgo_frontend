@@ -14,7 +14,7 @@ from auth_utils_cognito import menu_with_redirect
 
 from virgo_modules.src.ticketer_source import stock_eda_panel
 from tooling.portfolio_utils import return_matrix, filter_scale_ts
-from tooling.portfolio_utils import sirius_in_allocator_plot, plot_ts_allocations, pie_plots_candidates
+from tooling.portfolio_utils import sirius_in_allocator_plot, plot_ts_allocations, pie_plots_candidates, pie_plots_benchmarks
 
 configs = yaml.safe_load(Path('configs.yaml').read_text())
 debug_mode = configs["debug_mode"]
@@ -150,12 +150,15 @@ if st.button("run"):
                         break
                 # producing dashboards!!!
                 fig1 = pie_plots_candidates(allocator_df, tickers)
-                fig2 = plot_ts_allocations(allocator_df,tickers, targets)
+                fig2 = pie_plots_benchmarks(allocator_df, tickers)
+                fig3 = plot_ts_allocations(allocator_df,tickers, targets)
                 st.plotly_chart(fig1, use_container_width=True)
                 st.plotly_chart(fig2, use_container_width=True)
+                st.plotly_chart(fig3, use_container_width=True)
             
         with sirius:
             if on_allocator and succcess_main_page:
                 fig3 =sirius_in_allocator_plot(sirius_df, map_targets)
                 st.plotly_chart(fig3, use_container_width=True)
+
 

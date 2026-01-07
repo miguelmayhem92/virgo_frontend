@@ -206,7 +206,11 @@ def pie_plots_candidates(data,stock_codes, window_allocation=4):
     
     max_date_ = datetime.datetime.strptime(max_date , '%Y-%m-%d') - relativedelta(days=10)
     begin_date = max_date_ - relativedelta(days=10)
-    data_ = data[data["Date"] >= begin_date.strftime('%Y-%m-%d')]
+    data_ = data[
+        (data["Date"] >= begin_date.strftime('%Y-%m-%d'))
+        &
+        (data["Date"] < max_date_.strftime('%Y-%m-%d'))
+        ]
     data_agr = data_.groupby(["asset"],as_index=False).agg(allocation=(f"optimal_asset_future_return","mean"))
     data_agr["allocation"] = data_agr["allocation"]*100
     data_agr["allocation"] = data_agr["allocation"].round(2)
@@ -222,4 +226,75 @@ def pie_plots_candidates(data,stock_codes, window_allocation=4):
 
     
     fig.update_layout(height=+500, width=1200, title_text="Individual candidate allocations")
+    return fig
+
+def pie_plots_benchmarks(data, target_variables,window_allocation=4):
+    fig = make_subplots(rows=1, cols=2, 
+                        specs=[[{"type": "domain"}, {"type": "domain"}]],
+                    subplot_titles=["estimated benchmark", "past actual"],vertical_spacing=0.08)
+    n_colors= len(COLOR_LIST)
+    new_color_list = list()
+    list_pd = list()
+    
+    # predicted
+    for i,feature in enumerate(target_variables[1:]):
+        i = i%n_colors
+        color = COLOR_LIST[i]
+        feature = f"hat_{feature}"
+        tag = feature.split("_")[2]
+        tag = bench_map[tag]
+        aggr = data.groupby(["Date"],as_index=False).agg(
+            q50 = (feature, quantile(0.50)),
+        ).rename(columns={
+            "q50":f"q50_{feature}",
+        })
+        max_date = aggr["Date"].max()
+        begin_date = datetime.datetime.strptime(max_date , '%Y-%m-%d') - relativedelta(days=window_allocation)
+        aggr = aggr[aggr["Date"] >= begin_date.strftime('%Y-%m-%d')]
+        aggr = aggr.sort_values("Date")
+        aggr["asset"] = tag
+        aggr = aggr.groupby("asset",as_index=False).agg(allocation=(f"q50_{feature}","mean"))
+        new_color_list.append(color)
+        list_pd.append(aggr.copy())
+    aggr_df = pd.concat(list_pd)
+    aggr_df["allocation"] = aggr_df["allocation"]*100
+    aggr_df["allocation"] = aggr_df["allocation"].round(2)
+
+    fig.add_trace(go.Pie(labels=aggr_df["asset"],values=aggr_df["allocation"],
+                         textinfo='label+value+percent',
+                         showlegend=False,marker=dict(colors=new_color_list), hole=.3), row=1, col=1)
+
+    ## actual
+    for i,feature in enumerate(target_variables[1:]):
+        i = i%n_colors
+        color = COLOR_LIST[i]
+        tag = feature.split("_")[1]
+        tag = bench_map[tag]
+        aggr = data.groupby(["Date"],as_index=False).agg(
+            q50 = (feature, quantile(0.50)),
+        ).rename(columns={
+            "q50":f"q50_{feature}",
+        })
+        max_date = aggr["Date"].max()
+        max_date_ = datetime.datetime.strptime(max_date , '%Y-%m-%d') - relativedelta(days=10)
+        begin_date = max_date_ - relativedelta(days=window_allocation)
+        aggr = aggr[
+            (aggr["Date"] >= begin_date.strftime('%Y-%m-%d'))
+            &
+            (aggr["Date"] < max_date_.strftime('%Y-%m-%d'))
+        ]
+        aggr = aggr.sort_values("Date")
+        aggr["asset"] = tag
+        aggr = aggr.groupby("asset",as_index=False).agg(allocation=(f"q50_{feature}","mean"))
+        new_color_list.append(color)
+        list_pd.append(aggr.copy())
+    aggr_df = pd.concat(list_pd)
+    aggr_df["allocation"] = aggr_df["allocation"]*100
+    aggr_df["allocation"] = aggr_df["allocation"].round(2)
+
+    fig.add_trace(go.Pie(labels=aggr_df["asset"],values=aggr_df["allocation"],
+                         textinfo='label+value+percent',
+                         showlegend=False,marker=dict(colors=new_color_list), hole=.3), row=1, col=2)
+   
+    fig.update_layout(height=+500, width=1200, title_text="allocations candidate and allocations")
     return fig
