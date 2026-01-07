@@ -1,6 +1,9 @@
 import gc
+import datetime
+from dateutil.relativedelta import relativedelta
 
 import numpy as np
+import pandas as pd
 import matplotlib.pyplot as plt
 import plotly.graph_objects as go
 import plotly
@@ -67,10 +70,37 @@ def filter_scale_ts(data, date, features,trad_days = 7,lags=3):
     fig.update_layout(height=700,width=1000,title="Time series view of multiple assets")
     return fig
 
-def plot_individual_allocations(data,stock_codes, window=300):
-    fig = make_subplots(rows=3, cols=1, shared_xaxes=True,
-                    subplot_titles=["Prices", "estimations","observed"],vertical_spacing=0.08)
+def quantile(q=0.5, **kwargs):
+    def f(series):
+        return series.quantile(q, **kwargs)
+    return f
+    
+def sirius_in_allocator_plot(data_plot,map_targets, data_window=550, window=4):
     n_colors= len(COLOR_LIST)
+    fig = make_subplots(
+        rows=len(map_targets.keys()), cols=1, shared_xaxes=True,subplot_titles=[f"smooth {v}" for k,v in map_targets.items()],
+            vertical_spacing=0.08)
+    for j,asset_name in enumerate(data_plot.asset.unique()):
+        j = j%n_colors
+        color = COLOR_LIST[j]
+        df = data_plot[data_plot.asset == asset_name].iloc[-data_window:].copy()
+        for rowi,target in enumerate(map_targets.keys()):
+            legend = True if rowi == 0 else False 
+            df[f"smooth_{target}"] = df.sort_values("Date")[target].rolling(window,min_periods=1).mean()
+            fig.add_trace(go.Scatter(x=df["Date"],y=df[f"smooth_{target}"],name=asset_name,legendgroup=asset_name, showlegend=legend,line_color=color), row=rowi+1, col=1)
+        del df
+        gc.collect()
+    fig.update_layout(height=800, width=1200, title_text="sirius smoothed probabilities")
+    return fig
+
+
+def plot_ts_allocations(data,stock_codes, target_variables, window=100):
+    fig = make_subplots(rows=3, cols=2, shared_xaxes=True,
+                    subplot_titles=["Prices","Prices", "estimations","estimations","observed","observed"],vertical_spacing=0.08)
+    n_colors= len(COLOR_LIST)
+    new_color_list = list()
+
+    ## individual allocations
     for i,asset in enumerate(stock_codes):
         try:
             i = i%n_colors
@@ -82,20 +112,11 @@ def plot_individual_allocations(data,stock_codes, window=300):
             fig.add_trace(go.Scatter(x=df["Date"],y=df[feature],name=asset,legendgroup=asset,line_color=color, showlegend=False), row=2, col=1)
             feature = f"optimal_asset_future_return"
             fig.add_trace(go.Scatter(x=df["Date"],y=df[feature],name=asset,legendgroup=asset,line_color=color, showlegend=False), row=3, col=1)
+            new_color_list.append(color)
         except:
             continue
-    fig.update_layout(height=+900, width=1200, title_text="Individual candidate allocations")
-    return fig
 
-def quantile(q=0.5, **kwargs):
-    def f(series):
-        return series.quantile(q, **kwargs)
-    return f
-    
-def benchmark_allocations(data,target_variables, window=300):
-    fig = make_subplots(rows=3, cols=1, shared_xaxes=True,subplot_titles=["Prices", "estimations","observed"])
-    n_colors= len(COLOR_LIST)
-    
+    ## benchmark allocations
     # closes
     for i,feature in enumerate(target_variables[1:]):
         i = i%n_colors
@@ -107,7 +128,7 @@ def benchmark_allocations(data,target_variables, window=300):
         aggr = aggr.sort_values("Date").iloc[-window:]
         init = aggr["Close"].iloc[0]
         ntag = bench_map[tag]
-        fig.add_trace(go.Scatter(x=aggr["Date"],y=aggr["Close"]/init,name=ntag,legendgroup=ntag, showlegend=True,line_color=color), row=1, col=1)
+        fig.add_trace(go.Scatter(x=aggr["Date"],y=aggr["Close"]/init,name=ntag,legendgroup=ntag, showlegend=True,line_color=color), row=1, col=2)
         
     # predicted
     for i,feature in enumerate(target_variables[1:]):
@@ -126,9 +147,9 @@ def benchmark_allocations(data,target_variables, window=300):
             "q75":f"q75_{feature}",
         })
         aggr = aggr.sort_values("Date").iloc[-window:]
-        fig.add_trace(go.Scatter(x=aggr["Date"],y=aggr[f"q25_{feature}"],name=tag,legendgroup=tag, showlegend=False,line_color=color), row=2, col=1)
-        fig.add_trace(go.Scatter(x=aggr["Date"],y=aggr[f"q50_{feature}"],name=tag,legendgroup=tag, showlegend=False,line_color=color), row=2, col=1)
-        fig.add_trace(go.Scatter(x=aggr["Date"],y=aggr[f"q75_{feature}"],name=tag,legendgroup=tag, showlegend=False,line_color=color), row=2, col=1)
+        fig.add_trace(go.Scatter(x=aggr["Date"],y=aggr[f"q25_{feature}"],name=tag,legendgroup=tag, showlegend=False,line_color=color), row=2, col=2)
+        fig.add_trace(go.Scatter(x=aggr["Date"],y=aggr[f"q50_{feature}"],name=tag,legendgroup=tag, showlegend=False,line_color=color), row=2, col=2)
+        fig.add_trace(go.Scatter(x=aggr["Date"],y=aggr[f"q75_{feature}"],name=tag,legendgroup=tag, showlegend=False,line_color=color), row=2, col=2)
     
     # actual
     for i,feature in enumerate(target_variables[1:]):
@@ -146,27 +167,59 @@ def benchmark_allocations(data,target_variables, window=300):
             "q75":f"q75_{feature}",
         })
         aggr = aggr.sort_values("Date").iloc[-window:]
-        fig.add_trace(go.Scatter(x=aggr["Date"],y=aggr[f"q25_{feature}"],name=tag,legendgroup=tag, showlegend=False,line_color=color), row=3, col=1)
-        fig.add_trace(go.Scatter(x=aggr["Date"],y=aggr[f"q50_{feature}"],name=tag,legendgroup=tag, showlegend=False,line_color=color), row=3, col=1)
-        fig.add_trace(go.Scatter(x=aggr["Date"],y=aggr[f"q75_{feature}"],name=tag,legendgroup=tag, showlegend=False,line_color=color), row=3, col=1)
-        
-    fig.update_layout(height=900, width=1200, title_text="benchmarks candidate allocations")
+        fig.add_trace(go.Scatter(x=aggr["Date"],y=aggr[f"q25_{feature}"],name=tag,legendgroup=tag, showlegend=False,line_color=color), row=3, col=2)
+        fig.add_trace(go.Scatter(x=aggr["Date"],y=aggr[f"q50_{feature}"],name=tag,legendgroup=tag, showlegend=False,line_color=color), row=3, col=2)
+        fig.add_trace(go.Scatter(x=aggr["Date"],y=aggr[f"q75_{feature}"],name=tag,legendgroup=tag, showlegend=False,line_color=color), row=3, col=2)
+   
+    fig.update_layout(height=+900, width=1200, title_text="allocations candidate and allocations")
     return fig
 
-def sirius_in_allocator_plot(data_plot,map_targets, data_window=550, window=4):
+def pie_plots_candidates(data,stock_codes, window_allocation=4):
+    fig = make_subplots(rows=1, cols=2,
+                        specs=[[{"type": "domain"}, {"type": "domain"}]],
+                        subplot_titles=["estimated candidates", "past actual"],vertical_spacing=0.08)
     n_colors= len(COLOR_LIST)
-    fig = make_subplots(
-        rows=len(map_targets.keys()), cols=1, shared_xaxes=True,subplot_titles=[f"smooth {v}" for k,v in map_targets.items()],
-            vertical_spacing=0.08)
-    for j,asset_name in enumerate(data_plot.asset.unique()):
-        j = j%n_colors
-        color = COLOR_LIST[j]
-        df = data_plot[data_plot.asset == asset_name].iloc[-data_window:].copy()
-        for rowi,target in enumerate(map_targets.keys()):
-            legend = True if rowi == 0 else False 
-            df[f"smooth_{target}"] = df.sort_values("Date")[target].rolling(window,min_periods=1).mean()
-            fig.add_trace(go.Scatter(x=df["Date"],y=df[f"smooth_{target}"],name=asset_name,legendgroup=asset_name, showlegend=legend,line_color=color), row=rowi+1, col=1)
-        del df
-        gc.collect()
-    fig.update_layout(height=800, width=1200, title_text="sirius smoothed probabilities")
+    new_color_list = list()
+    for i,asset in enumerate(stock_codes):
+        try:
+            i = i%n_colors
+            color = COLOR_LIST[i]
+            df = data[data["asset"]==asset].sort_values("Date")
+            new_color_list.append(color)
+        except:
+            continue
+    max_date = data["Date"].max()
+    begin_date = datetime.datetime.strptime(max_date , '%Y-%m-%d') - relativedelta(days=window_allocation)
+    data_ = data[data["Date"] >= begin_date.strftime('%Y-%m-%d')]
+    data_agr = data_.groupby(["asset"],as_index=False).agg(allocation=(f"hat_optimal_asset_future_return","mean"))
+    data_agr["allocation"] = data_agr["allocation"]*100
+    data_agr["allocation"] = data_agr["allocation"].round(2)
+    data_agr['asset_cat'] = pd.Categorical(
+        data_agr['asset'], 
+        categories=stock_codes, 
+        ordered=True
+    )
+    data_agr = data_agr.sort_values('asset_cat')
+    fig.add_trace(go.Pie(labels=data_agr["asset"],values=data_agr["allocation"],
+                         textinfo='label+value+percent',
+                         showlegend=False,marker=dict(colors=new_color_list), hole=.3), row=1, col=1)
+    
+    max_date_ = datetime.datetime.strptime(max_date , '%Y-%m-%d') - relativedelta(days=10)
+    begin_date = max_date_ - relativedelta(days=10)
+    data_ = data[data["Date"] >= begin_date.strftime('%Y-%m-%d')]
+    data_agr = data_.groupby(["asset"],as_index=False).agg(allocation=(f"optimal_asset_future_return","mean"))
+    data_agr["allocation"] = data_agr["allocation"]*100
+    data_agr["allocation"] = data_agr["allocation"].round(2)
+    data_agr['asset_cat'] = pd.Categorical(
+        data_agr['asset'], 
+        categories=stock_codes, 
+        ordered=True
+    )
+    data_agr = data_agr.sort_values('asset_cat')
+    fig.add_trace(go.Pie(labels=data_agr["asset"],values=data_agr["allocation"],
+                         textinfo='label+value+percent',
+                         showlegend=False,marker=dict(colors=new_color_list), hole=.3), row=1, col=2)
+
+    
+    fig.update_layout(height=+500, width=1200, title_text="Individual candidate allocations")
     return fig

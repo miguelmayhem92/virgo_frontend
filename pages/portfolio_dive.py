@@ -14,7 +14,7 @@ from auth_utils_cognito import menu_with_redirect
 
 from virgo_modules.src.ticketer_source import stock_eda_panel
 from tooling.portfolio_utils import return_matrix, filter_scale_ts
-from tooling.portfolio_utils import plot_individual_allocations, benchmark_allocations, sirius_in_allocator_plot
+from tooling.portfolio_utils import sirius_in_allocator_plot, plot_ts_allocations, pie_plots_candidates
 
 configs = yaml.safe_load(Path('configs.yaml').read_text())
 debug_mode = configs["debug_mode"]
@@ -149,8 +149,8 @@ if st.button("run"):
                         sirius_df = dowload_any_object(sirius_name, f'edge_models/andromeda/consolidate/', 'csv', bucket)
                         break
                 # producing dashboards!!!
-                fig1 = plot_individual_allocations(allocator_df, tickers)
-                fig2 = benchmark_allocations(allocator_df, targets)
+                fig1 = pie_plots_candidates(allocator_df, tickers)
+                fig2 = plot_ts_allocations(allocator_df,tickers, targets)
                 st.plotly_chart(fig1, use_container_width=True)
                 st.plotly_chart(fig2, use_container_width=True)
             
