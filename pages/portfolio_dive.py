@@ -14,7 +14,14 @@ from auth_utils_cognito import menu_with_redirect
 
 from virgo_modules.src.ticketer_source import stock_eda_panel
 from tooling.portfolio_utils import return_matrix, filter_scale_ts
-from tooling.portfolio_utils import sirius_in_allocator_plot, plot_ts_allocations, pie_plots_candidates, pie_plots_benchmarks
+from tooling.portfolio_utils import (
+    asset_to_color, 
+    sirius_in_allocator_plot,
+    plot_ts_allocations, 
+    pie_plots_candidates, 
+    pie_plots_benchmarks, 
+    sirius_summary_plot
+)
 
 configs = yaml.safe_load(Path('configs.yaml').read_text())
 debug_mode = configs["debug_mode"]
@@ -149,16 +156,19 @@ if st.button("run"):
                         sirius_df = dowload_any_object(sirius_name, f'edge_models/andromeda/consolidate/', 'csv', bucket)
                         break
                 # producing dashboards!!!
-                fig1 = pie_plots_candidates(allocator_df, tickers)
-                fig2 = pie_plots_benchmarks(allocator_df, targets)
-                fig3 = plot_ts_allocations(allocator_df,tickers, targets)
+                asset2color = asset_to_color(tickers, targets)
+                fig1 = pie_plots_candidates(allocator_df, tickers,asset2color)
+                fig2 = pie_plots_benchmarks(allocator_df, targets, asset2color)
+                fig3 = plot_ts_allocations(allocator_df,tickers, targets, asset2color)
                 st.plotly_chart(fig1, use_container_width=True)
                 st.plotly_chart(fig2, use_container_width=True)
                 st.plotly_chart(fig3, use_container_width=True)
             
         with sirius:
             if on_allocator and succcess_main_page:
-                fig3 =sirius_in_allocator_plot(sirius_df, map_targets)
+                fig = sirius_summary_plot(sirius_df,asset2color)
+                st.plotly_chart(fig, use_container_width=True)
+                fig3 =sirius_in_allocator_plot(sirius_df, map_targets, asset2color)
                 st.plotly_chart(fig3, use_container_width=True)
 
 

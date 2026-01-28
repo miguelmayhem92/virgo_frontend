@@ -75,14 +75,17 @@ def quantile(q=0.5, **kwargs):
         return series.quantile(q, **kwargs)
     return f
     
-def sirius_in_allocator_plot(data_plot,map_targets, data_window=550, window=4):
-    n_colors= len(COLOR_LIST)
+def asset_to_color(stock_codes, target_variable):
+    full_asset_list = stock_codes + [bench_map[tag.split("_")[1]] for tag in target_variable[1:]]
+    asset2color = {x:COLOR_LIST[i%len(COLOR_LIST)] for i,x in enumerate(full_asset_list)}
+    return asset2color
+
+def sirius_in_allocator_plot(data_plot,map_targets, asset2color, data_window=550, window=4):
     fig = make_subplots(
         rows=len(map_targets.keys()), cols=1, shared_xaxes=True,subplot_titles=[f"smooth {v}" for k,v in map_targets.items()],
             vertical_spacing=0.08)
     for j,asset_name in enumerate(data_plot.asset.unique()):
-        j = j%n_colors
-        color = COLOR_LIST[j]
+        color = asset2color.get(asset_name)
         df = data_plot[data_plot.asset == asset_name].iloc[-data_window:].copy()
         for rowi,target in enumerate(map_targets.keys()):
             legend = True if rowi == 0 else False 
@@ -94,17 +97,14 @@ def sirius_in_allocator_plot(data_plot,map_targets, data_window=550, window=4):
     return fig
 
 
-def plot_ts_allocations(data,stock_codes, target_variables, window=100):
+def plot_ts_allocations(data,stock_codes, target_variables, asset2color, window=100):
     fig = make_subplots(rows=3, cols=2, shared_xaxes=True,
                     subplot_titles=["Prices","Prices", "estimations","estimations","observed","observed"],vertical_spacing=0.08)
-    n_colors= len(COLOR_LIST)
     new_color_list = list()
-
     ## individual allocations
-    for i,asset in enumerate(stock_codes):
+    for asset in stock_codes:
         try:
-            i = i%n_colors
-            color = COLOR_LIST[i]
+            color = asset2color.get(asset)
             df = data[data["asset"]==asset].sort_values("Date").iloc[-window:]
             init = df["Close"].iloc[0]
             fig.add_trace(go.Scatter(x=df["Date"],y=df["Close"]/init,name=asset, showlegend=True,legendgroup=asset,line_color=color), row=1, col=1)
@@ -118,9 +118,7 @@ def plot_ts_allocations(data,stock_codes, target_variables, window=100):
 
     ## benchmark allocations
     # closes
-    for i,feature in enumerate(target_variables[1:]):
-        i = i%n_colors
-        color = COLOR_LIST[i]
+    for feature in target_variables[1:]:
         tag = feature.split("_")[1]
         aggr = data.groupby(["Date"],as_index=False).agg(
             Close = (tag,"max"),
@@ -128,15 +126,15 @@ def plot_ts_allocations(data,stock_codes, target_variables, window=100):
         aggr = aggr.sort_values("Date").iloc[-window:]
         init = aggr["Close"].iloc[0]
         ntag = bench_map[tag]
+        color = asset2color.get(ntag)
         fig.add_trace(go.Scatter(x=aggr["Date"],y=aggr["Close"]/init,name=ntag,legendgroup=ntag, showlegend=True,line_color=color), row=1, col=2)
         
     # predicted
-    for i,feature in enumerate(target_variables[1:]):
-        i = i%n_colors
-        color = COLOR_LIST[i]
+    for feature in target_variables[1:]:
         feature = f"hat_{feature}"
         tag = feature.split("_")[2]
         tag = bench_map[tag]
+        color = asset2color.get(tag)
         aggr = data.groupby(["Date"],as_index=False).agg(
             q25 = (feature, quantile(0.25)),
             q50 = (feature, quantile(0.50)),
@@ -152,11 +150,10 @@ def plot_ts_allocations(data,stock_codes, target_variables, window=100):
         fig.add_trace(go.Scatter(x=aggr["Date"],y=aggr[f"q75_{feature}"],name=tag,legendgroup=tag, showlegend=False,line_color=color), row=2, col=2)
     
     # actual
-    for i,feature in enumerate(target_variables[1:]):
-        i = i%n_colors
-        color = COLOR_LIST[i]
+    for feature in target_variables[1:]:
         tag = feature.split("_")[1]
         tag = bench_map[tag]
+        color = asset2color.get(tag)
         aggr = data.groupby(["Date"],as_index=False).agg(
             q25 = (feature, quantile(0.25)),
             q50 = (feature, quantile(0.50)),
@@ -174,7 +171,7 @@ def plot_ts_allocations(data,stock_codes, target_variables, window=100):
     fig.update_layout(height=+900, width=1200, title_text="allocations candidate and allocations")
     return fig
 
-def pie_plots_candidates(data,stock_codes, window_allocation=4):
+def pie_plots_candidates(data,stock_codes,asset2color, window_allocation=4):
     fig = make_subplots(rows=1, cols=2,
                         specs=[[{"type": "domain"}, {"type": "domain"}]],
                         subplot_titles=["estimated candidates", "past actual"],vertical_spacing=0.08)
@@ -182,8 +179,7 @@ def pie_plots_candidates(data,stock_codes, window_allocation=4):
     new_color_list = list()
     for i,asset in enumerate(stock_codes):
         try:
-            i = i%n_colors
-            color = COLOR_LIST[i]
+            color = asset2color.get(asset)
             df = data[data["asset"]==asset].sort_values("Date")
             new_color_list.append(color)
         except:
@@ -206,11 +202,7 @@ def pie_plots_candidates(data,stock_codes, window_allocation=4):
     
     max_date_ = datetime.datetime.strptime(max_date , '%Y-%m-%d') - relativedelta(days=10)
     begin_date = max_date_ - relativedelta(days=10)
-    data_ = data[
-        (data["Date"] >= begin_date.strftime('%Y-%m-%d'))
-        &
-        (data["Date"] < max_date_.strftime('%Y-%m-%d'))
-        ]
+    data_ = data[data["Date"] >= begin_date.strftime('%Y-%m-%d')]
     data_agr = data_.groupby(["asset"],as_index=False).agg(allocation=(f"optimal_asset_future_return","mean"))
     data_agr["allocation"] = data_agr["allocation"]*100
     data_agr["allocation"] = data_agr["allocation"].round(2)
@@ -228,7 +220,7 @@ def pie_plots_candidates(data,stock_codes, window_allocation=4):
     fig.update_layout(height=+500, width=1200, title_text="Individual candidate allocations")
     return fig
 
-def pie_plots_benchmarks(data, target_variables,window_allocation=4):
+def pie_plots_benchmarks(data, target_variables,asset2color,window_allocation=4):
     fig = make_subplots(rows=1, cols=2, 
                         specs=[[{"type": "domain"}, {"type": "domain"}]],
                     subplot_titles=["estimated benchmark", "past actual"],vertical_spacing=0.08)
@@ -237,12 +229,11 @@ def pie_plots_benchmarks(data, target_variables,window_allocation=4):
     list_pd = list()
     
     # predicted
-    for i,feature in enumerate(target_variables[1:]):
-        i = i%n_colors
-        color = COLOR_LIST[i]
+    for feature in target_variables[1:]:
         feature = f"hat_{feature}"
         tag = feature.split("_")[2]
         tag = bench_map[tag]
+        color = asset2color[tag]
         aggr = data.groupby(["Date"],as_index=False).agg(
             q50 = (feature, quantile(0.50)),
         ).rename(columns={
@@ -265,11 +256,10 @@ def pie_plots_benchmarks(data, target_variables,window_allocation=4):
                          showlegend=False,marker=dict(colors=new_color_list), hole=.3), row=1, col=1)
 
     ## actual
-    for i,feature in enumerate(target_variables[1:]):
-        i = i%n_colors
-        color = COLOR_LIST[i]
+    for feature in target_variables[1:]:
         tag = feature.split("_")[1]
         tag = bench_map[tag]
+        color = asset2color[tag]
         aggr = data.groupby(["Date"],as_index=False).agg(
             q50 = (feature, quantile(0.50)),
         ).rename(columns={
@@ -297,4 +287,22 @@ def pie_plots_benchmarks(data, target_variables,window_allocation=4):
                          showlegend=False,marker=dict(colors=new_color_list), hole=.3), row=1, col=2)
    
     fig.update_layout(height=+500, width=1200, title_text="allocations candidate and allocations")
+    return fig
+
+def sirius_summary_plot(data, asset2color,window=4):
+    data[f'mean_proba_target_down'] = data.groupby(['asset'])["proba_target_down"].rolling(window,min_periods=2).mean().reset_index(level=0, drop=True)
+    data[f'mean_proba_target_up'] = data.groupby(['asset'])["proba_target_up"].rolling(window,min_periods=2).mean().reset_index(level=0, drop=True)
+    data['rn'] = data.sort_values("Date",ascending=False).groupby(['asset']).cumcount()+1
+    data["diff"] =  data[f'mean_proba_target_down'] - data[f'mean_proba_target_up']
+    result = data[(data["rn"] == 1)].sort_values("diff",ascending=False)
+
+    fig = make_subplots(rows=1, cols=1)
+    for asset in result.asset.unique():
+        color = asset2color.get(asset)
+        df = result[result.asset == asset]
+        fig.add_trace(go.Scatter(x=df["asset"],y=df[f"mean_proba_target_down"],marker_size=15,hovertemplate="prob go up: %{y}",
+                                 name=asset,legendgroup=asset,line_color=color,marker_symbol="triangle-up"), row=1, col=1)
+        fig.add_trace(go.Scatter(x=df["asset"],y=df[f"mean_proba_target_up"],marker_size=15,hovertemplate="prob go down: %{y}",
+                                 name=asset,legendgroup=asset,showlegend=False,marker_symbol="triangle-down",line_color=color), row=1, col=1)
+    fig.update_layout(height=400, width=1200, title_text="sirius probas summary")
     return fig
