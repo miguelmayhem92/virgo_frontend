@@ -1,7 +1,7 @@
 import streamlit as st
 from utils import logo
 # from auth_utils import menu, menu_with_redirect
-from auth_utils_cognito import menu
+from auth_utils_cognito_v2 import menu
 from pathlib import Path
 import yaml
 from st_pages import  get_nav_from_toml
@@ -15,7 +15,7 @@ try:
     if st.session_state.authenticated == True:
         menu()
 except:
-    st.switch_page("pages/virgo_signin.py")
+    st.switch_page("pages/virgo_signin_gato.py") # testing new version
     
 
 st.write("# Welcome to Virgo! 📈")
