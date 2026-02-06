@@ -35,6 +35,7 @@ def authenticate_user(username, password):
             st.write(f"welcome: {username}")
             st.write(f"you are: {user_group}")
             return user_group
+        
     except cognito_client.exceptions.NotAuthorizedException:
         st.error("Invalid username or password.")
     except Exception as e:
@@ -134,9 +135,9 @@ def _authenticated_menu():
         st.sidebar.page_link("pages/markets.py", label="Markets")
         st.sidebar.page_link("pages/multiple_symbols.py", label="Batches")
         st.sidebar.page_link("pages/portfolio_dive.py", label="Portfolio")
-        st.sidebar.page_link("pages/guest_explore.py", label="Explore assets")
     elif st.session_state.role == 'guest':
-        st.sidebar.page_link("pages/guest_explore.py", label="Explore assets")
+        st.sidebar.page_link("pages/portfolio_dive.py", label="Portfolio")
+        st.sidebar.page_link("pages/asset_explore.py", label="Explore assets")
     st.sidebar.page_link("pages/delete_user.py", label="unsuscribe")
 
     if st.sidebar.button("Logout"):

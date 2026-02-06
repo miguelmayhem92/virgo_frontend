@@ -14,7 +14,7 @@ from virgo_modules.src.ticketer_source import stock_eda_panel
 
 from utils import logo, execute_edgemodel_lambda, reading_last_execution, get_connection, call_edge_json, dowload_any_object, signal_position_message
 from utils import perf_metrics_message, get_categorical_targets
-from auth_utils_cognito import menu_with_redirect
+from auth_utils_cognito_v2 import menu_with_redirect
 
 configs = yaml.safe_load(Path('configs.yaml').read_text())
 debug_mode = configs["debug_mode"]
@@ -22,6 +22,10 @@ models_dict = configs["models"]
 execution_date = datetime.datetime.today().strftime('%Y-%m-%d')
 execution_date = f"{execution_date}"
 bucket = 'virgo-data'
+guest_symbols = configs["guest_symbols"]
+guest_symbols = {k:v for list_item in guest_symbols for (k,v) in list_item.items()}
+guest_symbol_map = configs["guest_symbol_map"]
+guest_symbol_map = {k:v for list_item in guest_symbol_map for (k,v) in list_item.items()}
 
 st.set_page_config(layout="wide")
 logo(debug_mode)
@@ -42,7 +46,15 @@ st.write(
     """
 )
 
-symbol_name = st.text_input('Asset symbol', 'PEP')
+if st.session_state.role == 'guest':
+    symbols_ = list(guest_symbols.keys())
+    symbol_name_ = st.selectbox(
+        'select one option',
+        tuple(symbols_)
+    )
+    symbol_name = guest_symbols[symbol_name_]
+else:
+    symbol_name = st.text_input('Asset symbol', 'PEP')
 
 st.write(
     """

@@ -20,7 +20,7 @@ from virgo_modules.src.ticketer_source import stock_eda_panel
 from utils import logo, reading_last_execution, dowload_any_object, signal_position_message
 from utils import perf_metrics_message, get_categorical_targets
 
-from auth_utils_cognito import menu_with_redirect
+from auth_utils_cognito_v2 import menu_with_redirect
 
 configs = yaml.safe_load(Path('configs.yaml').read_text())
 debug_mode = configs["debug_mode"]

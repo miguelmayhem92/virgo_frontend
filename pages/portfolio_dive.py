@@ -10,7 +10,7 @@ import seaborn as sns
 import streamlit as st
 import matplotlib.pyplot as plt
 from utils import logo, execute_state_machine_allocator, dowload_any_object
-from auth_utils_cognito import menu_with_redirect
+from auth_utils_cognito_v2 import menu_with_redirect
 
 from virgo_modules.src.ticketer_source import stock_eda_panel
 from tooling.portfolio_utils import return_matrix, filter_scale_ts
@@ -33,6 +33,10 @@ map_targets = {
     "proba_target_down":"proba_go_up",
     "proba_target_up":"proba_go_down",
 }
+guest_symbols = configs["guest_symbols"]
+guest_symbols = {k:v for list_item in guest_symbols for (k,v) in list_item.items()}
+guest_symbol_map = configs["guest_symbol_map"]
+guest_symbol_map = {k:v for list_item in guest_symbol_map for (k,v) in list_item.items()}
 
 st.set_page_config(layout="wide")
 logo(debug_mode)
@@ -43,16 +47,39 @@ st.markdown("# Portfolio dive")
 
 st.write(
     """
-    Some portfolio analysis
+    Decorrelate assets, get allocation and calculate probability to go up or down
     """
 )
-
+if st.session_state.role == 'guest':
+    symbols_ = list(guest_symbols.keys())
+    st.write(
+        f"""
+        select one from the list:
+        """
+    )  
+    st.write(guest_symbols)
 
 symbol_name = st.text_input('Asset symbol', 'PEP,LMT')
 tickers = symbol_name.split(",")
 tickers = [x.strip() for x in tickers]
+
+def inspect(asset_list, guest_symbols):
+    rejected = list()
+    for x in asset_list:
+        if x not in guest_symbols.values():
+            rejected.append(x)
+    if len(rejected)>0:
+        rejected_str = ",".join(rejected)
+        st.write(f"rejected symbols: {rejected_str}")
+    asset_list = [x for x in asset_list if x not in rejected]
+    return asset_list
+
+
 if st.button("add"):
-    st.write(",".join(tickers))
+    if st.session_state.role == 'guest':
+        tickers = inspect(tickers, guest_symbols)
+    str_asset_list = ",".join(tickers)
+    st.write(f"selected assets: {str_asset_list}")
 
 lags_short = st.number_input('short term lag', 3)
 lags_mid= st.number_input('mid term lag', 7)

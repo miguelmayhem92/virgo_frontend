@@ -8,7 +8,7 @@ from utils import logo, print_object, dowload_any_object, get_connection
 
 from virgo_modules.src.re_utils import produce_plotly_plots
 import time
-from auth_utils_cognito import menu_with_redirect
+from auth_utils_cognito_v2 import menu_with_redirect
 
 configs = yaml.safe_load(Path('configs.yaml').read_text())
 debug_mode = configs["debug_mode"]

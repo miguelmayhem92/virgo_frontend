@@ -15,7 +15,7 @@ try:
     if st.session_state.authenticated == True:
         menu()
 except:
-    st.switch_page("pages/virgo_signin_gato.py") # testing new version
+    st.switch_page("pages/virgo_signin.py") # testing new version
     
 
 st.write("# Welcome to Virgo! 📈")

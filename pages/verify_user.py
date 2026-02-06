@@ -1,6 +1,6 @@
 import time
 import streamlit as st
-from auth_utils_cognito_v2 import create_user, verify_auth_code
+from auth_utils_cognito_v2 import verify_auth_code
 
 st.write("# Welcome to Virgo! 📈")
 
