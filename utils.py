@@ -13,6 +13,7 @@ import requests
 import numpy as np
 from virgo_modules.src.ticketer_source import stock_eda_panel
 from sklearn.metrics import precision_score, recall_score
+import yfinance as yf
 
 def get_connection():
     try:
@@ -411,3 +412,10 @@ def perf_metrics_message(data, test_data_size, edge_name):
         }
     }
     return results
+
+def find_info(symbol):
+    asset = yf.Ticker(symbol)
+    sn, c, s = asset.info.get("shortName"), asset.info.get("country"), asset.info.get("sector")
+    return {
+        "symbol": symbol, "short_name": sn, "country":c, "sector":s
+    }

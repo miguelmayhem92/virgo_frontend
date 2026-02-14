@@ -1,6 +1,7 @@
 import gc
 import datetime
 from dateutil.relativedelta import relativedelta
+import math
 
 import numpy as np
 import pandas as pd
@@ -19,7 +20,17 @@ COLOR_LIST = [
     '#e377c2',  # raspberry yogurt pink
     '#7f7f7f',  # middle gray
     '#bcbd22',  # curry yellow-green
-    '#17becf'   # blue-teal
+    '#17becf',   # blue-teal
+    "#A1736A",
+    "#2B245C",
+    "#9E1694",
+    "#821221",
+    "#A6AD53",
+    "#E0531F",
+    "#9E0505",
+    "#2CD43B",
+    "#0CA0AD",
+    "#5D42E3",
 ]
 
 bench_map = {
@@ -44,8 +55,8 @@ def filter_scale_ts(data, date, features,trad_days = 7,lags=3):
     df = data[data["Date"] >= date].sort_values("Date").set_index("Date").copy()
     df_1 = df.iloc[0]
     df = df/df_1
-
-    fig = make_subplots(rows=2, cols=1,shared_xaxes=True,vertical_spacing=0.02)
+    subtitles = ["prices", "volatility"]
+    fig = make_subplots(rows=2, cols=1,shared_xaxes=True,vertical_spacing=0.02,subplot_titles=subtitles)
     colors = plotly.colors.DEFAULT_PLOTLY_COLORS
     for i,code in enumerate(features):
         color=colors[i%len(colors)]
@@ -80,17 +91,38 @@ def asset_to_color(stock_codes, target_variable):
     asset2color = {x:COLOR_LIST[i%len(COLOR_LIST)] for i,x in enumerate(full_asset_list)}
     return asset2color
 
-def sirius_in_allocator_plot(data_plot,map_targets, asset2color, data_window=550, window=4):
+def sirius_in_allocator_plot(data_plot,map_targets, asset2color, data_window=550, window=4, batch=3):
+    int_map = {
+        'proba_target_down':{
+            "arrow":"triangle-up",
+            "line_type":"dash",
+            "label":"go up"
+        },
+        'proba_target_up':{
+            "arrow":"triangle-down",
+            "line_type":"dot",
+            "label":"go down"
+        },
+    }
+    assets = list(data_plot.asset.unique())
+    rows = math.ceil(len(assets)/batch)
     fig = make_subplots(
-        rows=len(map_targets.keys()), cols=1, shared_xaxes=True,subplot_titles=[f"smooth {v}" for k,v in map_targets.items()],
+        rows=rows, cols=1, shared_xaxes=True,
             vertical_spacing=0.08)
-    for j,asset_name in enumerate(data_plot.asset.unique()):
+    for j,asset_name in enumerate(data_plot.asset.unique(),start=1):
         color = asset2color.get(asset_name)
         df = data_plot[data_plot.asset == asset_name].iloc[-data_window:].copy()
-        for rowi,target in enumerate(map_targets.keys()):
-            legend = True if rowi == 0 else False 
+        rowi = math.ceil(j/batch)
+        for k,target in enumerate(map_targets.keys()):
+            arrow = int_map[target]["arrow"]
+            dot_type = int_map[target]["line_type"]
+            label = int_map[target]["label"]
+            legend = True if k == 0 else False
             df[f"smooth_{target}"] = df.sort_values("Date")[target].rolling(window,min_periods=1).mean()
-            fig.add_trace(go.Scatter(x=df["Date"],y=df[f"smooth_{target}"],name=asset_name,legendgroup=asset_name, showlegend=legend,line_color=color), row=rowi+1, col=1)
+            fig.add_trace(go.Scatter(
+                x=df["Date"],y=df[f"smooth_{target}"],name=asset_name,legendgroup=asset_name,mode="markers+lines",marker=dict(size=12),
+                line=dict(dash=dot_type),
+                showlegend=legend,line_color=color,marker_symbol=arrow), row=rowi, col=1)
         del df
         gc.collect()
     fig.update_layout(height=800, width=1200, title_text="sirius smoothed probabilities")
@@ -99,7 +131,7 @@ def sirius_in_allocator_plot(data_plot,map_targets, asset2color, data_window=550
 
 def plot_ts_allocations(data,stock_codes, target_variables, asset2color, window=100):
     fig = make_subplots(rows=3, cols=2, shared_xaxes=True,
-                    subplot_titles=["Prices","Prices", "estimations","estimations","observed","observed"],vertical_spacing=0.08)
+                    subplot_titles=["Prices - Candidates","Prices - Benchmarks", "estimations","estimations","observed","observed"],vertical_spacing=0.08)
     new_color_list = list()
     ## individual allocations
     for asset in stock_codes:
@@ -168,13 +200,13 @@ def plot_ts_allocations(data,stock_codes, target_variables, asset2color, window=
         fig.add_trace(go.Scatter(x=aggr["Date"],y=aggr[f"q50_{feature}"],name=tag,legendgroup=tag, showlegend=False,line_color=color), row=3, col=2)
         fig.add_trace(go.Scatter(x=aggr["Date"],y=aggr[f"q75_{feature}"],name=tag,legendgroup=tag, showlegend=False,line_color=color), row=3, col=2)
    
-    fig.update_layout(height=+900, width=1200, title_text="allocations candidate and allocations")
+    fig.update_layout(height=+900, width=1200, title_text="time series, candidates and benchmarks")
     return fig
 
 def pie_plots_candidates(data,stock_codes,asset2color, window_allocation=4):
     fig = make_subplots(rows=1, cols=2,
                         specs=[[{"type": "domain"}, {"type": "domain"}]],
-                        subplot_titles=["estimated candidates", "past actual"],vertical_spacing=0.08)
+                        subplot_titles=["estimated candidates", "observed"],vertical_spacing=0.08)
     n_colors= len(COLOR_LIST)
     new_color_list = list()
     for i,asset in enumerate(stock_codes):
@@ -223,7 +255,7 @@ def pie_plots_candidates(data,stock_codes,asset2color, window_allocation=4):
 def pie_plots_benchmarks(data, target_variables,asset2color,window_allocation=4):
     fig = make_subplots(rows=1, cols=2, 
                         specs=[[{"type": "domain"}, {"type": "domain"}]],
-                    subplot_titles=["estimated benchmark", "past actual"],vertical_spacing=0.08)
+                    subplot_titles=["estimated benchmark", "observed"],vertical_spacing=0.08)
     n_colors= len(COLOR_LIST)
     new_color_list = list()
     list_pd = list()
@@ -286,7 +318,7 @@ def pie_plots_benchmarks(data, target_variables,asset2color,window_allocation=4)
                          textinfo='label+value+percent',
                          showlegend=False,marker=dict(colors=new_color_list), hole=.3), row=1, col=2)
    
-    fig.update_layout(height=+500, width=1200, title_text="allocations candidate and allocations")
+    fig.update_layout(height=+500, width=1200, title_text="individual benchmarks and allocations")
     return fig
 
 def sirius_summary_plot(data, asset2color,window=4):

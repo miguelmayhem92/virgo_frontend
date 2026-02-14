@@ -5,11 +5,12 @@ from PIL import Image
 import yaml
 import time
 
+import pandas as pd
 from pathlib import Path
 import seaborn as sns
 import streamlit as st
 import matplotlib.pyplot as plt
-from utils import logo, execute_state_machine_allocator, dowload_any_object
+from utils import logo, execute_state_machine_allocator, dowload_any_object, find_info
 from auth_utils_cognito_v2 import menu_with_redirect
 
 from virgo_modules.src.ticketer_source import stock_eda_panel
@@ -98,6 +99,15 @@ if st.button("run"):
         with tab_overview:
             if len(tickers) < 2:
                 st.error("the list must be higher than 1 items")
+
+            info_collect = list()
+            for s in tickers:
+                info = find_info(s)
+                info_collect.append(info)
+            info_collect_df = pd.DataFrame(info_collect)
+            st.write("### General Info:")
+            st.dataframe(info_collect_df)
+            
             stock_code = tickers[0]
             object_stock = stock_eda_panel(stock_code , 1000, '5y')
             object_stock.get_data()
@@ -107,7 +117,7 @@ if st.button("run"):
                     object_stock.extract_sec_data(code, ["Date","Close"], {"Close":code})
                 except:
                     st.error(f"{code} not found")
-
+            st.write("### Correlograms:")
             df_rets = return_matrix(object_stock.df, tickers, lags_short, apply_log=True)
             correlations = df_rets[tickers].corr(method="spearman")
 
@@ -187,12 +197,32 @@ if st.button("run"):
                 fig1 = pie_plots_candidates(allocator_df, tickers,asset2color)
                 fig2 = pie_plots_benchmarks(allocator_df, targets, asset2color)
                 fig3 = plot_ts_allocations(allocator_df,tickers, targets, asset2color)
+                st.write("""
+                    The allocation shows suggestion of how much to invest in an asset given some benchmarks:
+                    * the benchmarks are a group of indexes that are weakly correlated but that are robust in terms of return and volatility
+                    * then we have the candidate asset that we are interested to find the allocation percentage given the bench marks
+                         
+                    The allocation model will find the expected allocation individually in the asset list, creating portfolios per asset vs benchmarks
+                    Then the results are ranked in the pie plots
+                         
+                    Then we have:
+                    * expected: the expected allocation 
+                    * observed and past: PAST optimal allocation
+                    * The goal is to ANTICIPATE good allocations while PAST good allocations are missed oportunities
+                """)
                 st.plotly_chart(fig1, use_container_width=True)
                 st.plotly_chart(fig2, use_container_width=True)
                 st.plotly_chart(fig3, use_container_width=True)
             
         with sirius:
             if on_allocator and succcess_main_page:
+                st.write("""
+                    Sirius probablity is the score that gives you whether the asset price is going to go up or down
+                    I deally we look for a score to go up higher than the go down
+
+                         * Arrow down -> probability to go down
+                         * Arrow up -> probability to go up
+                """)
                 fig = sirius_summary_plot(sirius_df,asset2color)
                 st.plotly_chart(fig, use_container_width=True)
                 fig3 =sirius_in_allocator_plot(sirius_df, map_targets, asset2color)
