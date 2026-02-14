@@ -125,7 +125,7 @@ def sirius_in_allocator_plot(data_plot,map_targets, asset2color, data_window=550
                 showlegend=legend,line_color=color,marker_symbol=arrow), row=rowi, col=1)
         del df
         gc.collect()
-    fig.update_layout(height=250*rows, width=1200, title_text="sirius smoothed probabilities")
+    fig.update_layout(height=370*rows, width=1200, title_text="sirius smoothed probabilities")
     return fig
 
 
