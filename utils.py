@@ -414,8 +414,12 @@ def perf_metrics_message(data, test_data_size, edge_name):
     return results
 
 def find_info(symbol):
-    asset = yf.Ticker(symbol)
-    sn, c, s = asset.info.get("shortName"), asset.info.get("country"), asset.info.get("sector")
+    try:
+        asset = yf.Ticker(symbol)
+        sn, c, s = asset.info.get("shortName"), asset.info.get("country"), asset.info.get("sector")
+    except:
+        print("error finding asset data")
+        sn, c, s = None, None, None
     return {
         "symbol": symbol, "short_name": sn, "country":c, "sector":s
     }

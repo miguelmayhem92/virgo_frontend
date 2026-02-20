@@ -106,7 +106,8 @@ if st.button("run"):
                 info_collect.append(info)
             info_collect_df = pd.DataFrame(info_collect)
             st.write("### General Info:")
-            st.dataframe(info_collect_df)
+            witdh_df = 800
+            st.dataframe(info_collect_df, width=witdh_df)
             
             stock_code = tickers[0]
             object_stock = stock_eda_panel(stock_code , 1000, '5y')
@@ -210,6 +211,7 @@ if st.button("run"):
                     * observed and past: PAST optimal allocation
                     * The goal is to ANTICIPATE good allocations while PAST good allocations are missed oportunities
                 """)
+                st.dataframe(info_collect_df, width=witdh_df)
                 st.plotly_chart(fig1, use_container_width=True)
                 st.plotly_chart(fig2, use_container_width=True)
                 st.plotly_chart(fig3, use_container_width=True)
@@ -223,6 +225,7 @@ if st.button("run"):
                          * Arrow down -> probability to go down
                          * Arrow up -> probability to go up
                 """)
+                st.dataframe(info_collect_df, width=witdh_df)
                 fig = sirius_summary_plot(sirius_df,asset2color)
                 st.plotly_chart(fig, use_container_width=True)
                 fig3 =sirius_in_allocator_plot(sirius_df, map_targets, asset2color)
