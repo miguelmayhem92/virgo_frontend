@@ -419,7 +419,7 @@ def find_info(symbol):
         sn, c, s = asset.info.get("shortName"), asset.info.get("country"), asset.info.get("sector")
     except Exception as e:
         print("error finding asset data")
-        st.exception(e)
+        print(e)
         sn, c, s = None, None, None
     return {
         "symbol": symbol, "short_name": sn, "country":c, "sector":s
