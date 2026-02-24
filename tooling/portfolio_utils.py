@@ -342,7 +342,6 @@ def sirius_summary_plot(data, asset2color,window=4):
 def get_corr_clusters(correlations, threshold=0.3):
     df = correlations
     variables = df.columns
-    threshold = 0.3  # Seuil de corrélation
     binary_matrix = (df.values >= threshold).astype(int) 
 
     visited = set()
