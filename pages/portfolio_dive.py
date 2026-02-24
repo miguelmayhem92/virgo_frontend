@@ -21,7 +21,9 @@ from tooling.portfolio_utils import (
     plot_ts_allocations, 
     pie_plots_candidates, 
     pie_plots_benchmarks, 
-    sirius_summary_plot
+    sirius_summary_plot,
+    get_corr_clusters,
+    plot_vol_clusters
 )
 
 configs = yaml.safe_load(Path('configs.yaml').read_text())
@@ -90,6 +92,8 @@ date_back = datetime.datetime.now() - relativedelta(days=100)
 date_back_str = date_back.strftime("%Y-%m-%d")
 begin_date = st.text_input('Begin date', date_back_str)
 
+cluster_treshold = st.number_input('cluster threshold', value=0.7)
+
 on_allocator = st.toggle('Activate allocator model')
 
 tab_overview, allocation, sirius = st.tabs(['overview',"allocation", "sirius"])
@@ -157,6 +161,15 @@ if st.button("run"):
             plot=filter_scale_ts(object_stock.df, begin_date, tickers,trad_days = trade_days,lags=lags_short)
             st.plotly_chart(plot, use_container_width=True)
             succcess_main_page = True
+
+            #cluster volatility
+            clusters = get_corr_clusters(correlations, threshold=cluster_treshold)
+            n_t = [c for c in clusters if len(c) > 1]
+            if len(n_t) >= 1:
+                plot=plot_vol_clusters(object_stock.df, clusters, begin_date, tickers,lags=lags_mid)
+                st.plotly_chart(plot, use_container_width=True)
+            else:
+                st.write("no clusters found")
 
         with allocation:
             if on_allocator and succcess_main_page:

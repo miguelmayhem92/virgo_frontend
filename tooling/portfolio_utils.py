@@ -57,7 +57,7 @@ def filter_scale_ts(data, date, features,trad_days = 7,lags=3):
     df = df/df_1
     subtitles = ["prices", "volatility"]
     fig = make_subplots(rows=2, cols=1,shared_xaxes=True,vertical_spacing=0.02,subplot_titles=subtitles)
-    colors = plotly.colors.DEFAULT_PLOTLY_COLORS
+    colors = COLOR_LIST
     for i,code in enumerate(features):
         color=colors[i%len(colors)]
         fig.add_trace(go.Scatter(x=df.index, y=df[code],
@@ -337,4 +337,56 @@ def sirius_summary_plot(data, asset2color,window=4):
         fig.add_trace(go.Scatter(x=df["asset"],y=df[f"mean_proba_target_up"],marker_size=15,hovertemplate="prob go down: %{y}",
                                  name=asset,legendgroup=asset,showlegend=False,marker_symbol="triangle-down",line_color=color), row=1, col=1)
     fig.update_layout(height=400, width=1200, title_text="sirius probas summary")
+    return fig
+
+def get_corr_clusters(correlations, threshold=0.3):
+    df = correlations
+    variables = df.columns
+    threshold = 0.3  # Seuil de corrélation
+    binary_matrix = (df.values >= threshold).astype(int) 
+
+    visited = set()
+    clusters = []
+    
+    for i in range(len(variables)):
+     if i not in visited:
+         cluster = []
+         to_explore = [i]  
+         while to_explore:
+             node = to_explore.pop()
+             if node not in visited:
+                 visited.add(node)  # Marquer comme visité
+                 cluster.append(variables[node])  # Ajouter la variable au cluster
+                 # Ajouter toutes les connexions (1 dans la matrice binaire)
+                 neighbors = np.where(binary_matrix[node] == 1)[0]  # Indices des voisins
+                 to_explore.extend(neighbors)
+         clusters.append(cluster)
+    return clusters
+
+def plot_vol_clusters(data,clusters, date, features,trad_days=14,lags=3):
+    data=data[data["Date"] >= date].sort_values("Date").set_index("Date").copy()
+    colors= COLOR_LIST
+    for code in features:
+        data[code] = np.log(data[code]/data[code].shift(lags))
+        data[code] = np.square(data[code])
+        data[code] = data[code].rolling(window = trad_days).std()*np.sqrt(252)
+    df = data.sort_index().tail(1)
+    color_dict=dict()
+    fig = make_subplots(rows=1, cols=1,shared_xaxes=True,vertical_spacing=0.02)
+    for i,code in enumerate(features):
+        color=colors[i%len(colors)]
+        color_dict[code] = color
+    for j, cluster in enumerate(clusters):
+        for code in cluster:
+            color = color_dict[code]
+            vol = df[code].values[0]
+            fig.add_trace(go.Scatter(x=[vol], y=[j],
+                    mode='lines+markers',
+                    legendgroup=code,
+                    marker_symbol="hexagon",
+                    marker = dict(color=color,size=15),
+                    name=code),col=1,row=1)
+    fig.update_xaxes(title_text="Current Volatility", row=1, col=1)
+    fig.update_yaxes(title_text="Cluster", row=1, col=1)
+    fig.update_layout(height=500, width=700, title_text="Clustered assets")
     return fig
