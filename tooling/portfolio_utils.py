@@ -435,5 +435,5 @@ def plot_parallel_summary(data_vol, data_sirius, data_andromeda, tickers):
             ])
         )
     )
-    fig.update_layout(height=500, width=700, title_text="Summary")
+    fig.update_layout(height=500, width=700, title_text="Summary", margin=dict(l=150, r=150, t=50, b=50))
     return fig
