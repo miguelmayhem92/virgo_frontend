@@ -23,7 +23,11 @@ from tooling.portfolio_utils import (
     pie_plots_benchmarks, 
     sirius_summary_plot,
     get_corr_clusters,
-    plot_vol_clusters
+    plot_vol_clusters,
+    plot_parallel_summary,
+    get_last_volatilities,
+    get_sirius_last,
+    get_andromeda_last
 )
 
 configs = yaml.safe_load(Path('configs.yaml').read_text())
@@ -96,7 +100,7 @@ cluster_treshold = st.number_input('cluster threshold', value=0.7)
 
 on_allocator = st.toggle('Activate allocator model')
 
-tab_overview, allocation, sirius = st.tabs(['overview',"allocation", "sirius"])
+tab_overview, allocation, sirius, summary = st.tabs(['overview',"allocation", "sirius", "end summary"])
 
 if st.button("run"):
     with st.spinner('.......................... Now loading ..........................'):
@@ -243,5 +247,13 @@ if st.button("run"):
                 st.plotly_chart(fig, use_container_width=True)
                 fig3 =sirius_in_allocator_plot(sirius_df, map_targets, asset2color)
                 st.plotly_chart(fig3, use_container_width=True)
+                success_sirius=True
 
+        with summary:
+            if success_sirius and succcess_main_page:
+                df_vol = get_last_volatilities(object_stock.df, lags_mid, begin_date, tickers)
+                df_sirius_last = get_sirius_last(sirius_df, witdh_df)
+                df_andromeda_last = get_andromeda_last(allocator_df, tickers, witdh_df)
+                fig5 = plot_parallel_summary(df_vol, df_sirius_last, df_andromeda_last, tickers)
+                st.plotly_chart(fig5, use_container_width=True)
 

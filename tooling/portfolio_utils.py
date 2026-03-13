@@ -2,6 +2,7 @@ import gc
 import datetime
 from dateutil.relativedelta import relativedelta
 import math
+import itertools
 
 import numpy as np
 import pandas as pd
@@ -88,7 +89,8 @@ def quantile(q=0.5, **kwargs):
     
 def asset_to_color(stock_codes, target_variable):
     full_asset_list = stock_codes + [bench_map[tag.split("_")[1]] for tag in target_variable[1:]]
-    asset2color = {x:COLOR_LIST[i%len(COLOR_LIST)] for i,x in enumerate(full_asset_list)}
+    colors = itertools.cycle(COLOR_LIST)
+    asset2color = {x:next(colors) for x in full_asset_list}
     return asset2color
 
 def sirius_in_allocator_plot(data_plot,map_targets, asset2color, data_window=550, window=4, batch=3):
@@ -203,6 +205,22 @@ def plot_ts_allocations(data,stock_codes, target_variables, asset2color, window=
     fig.update_layout(height=+900, width=1200, title_text="time series, candidates and benchmarks")
     return fig
 
+def get_andromeda_last(data, stock_codes, window_allocation=7):
+    max_date = data["Date"].max()
+    begin_date = datetime.datetime.strptime(max_date , '%Y-%m-%d') - relativedelta(days=window_allocation)
+    data_ = data[data["Date"] >= begin_date.strftime('%Y-%m-%d')]
+    data_agr = data_.groupby(["asset"],as_index=False).agg(allocation=(f"hat_optimal_asset_future_return","mean"))
+    data_agr["allocation"] = data_agr["allocation"]*100
+    data_agr["allocation"] = data_agr["allocation"].round(2)
+    data_agr["Date"] =  max_date
+    data_agr['asset_cat'] = pd.Categorical(
+        data_agr['asset'], 
+        categories=stock_codes, 
+        ordered=True
+    )
+    data_agr = data_agr.sort_values('asset_cat')
+    return data_agr
+
 def pie_plots_candidates(data,stock_codes,asset2color, window_allocation=4):
     fig = make_subplots(rows=1, cols=2,
                         specs=[[{"type": "domain"}, {"type": "domain"}]],
@@ -217,17 +235,7 @@ def pie_plots_candidates(data,stock_codes,asset2color, window_allocation=4):
         except:
             continue
     max_date = data["Date"].max()
-    begin_date = datetime.datetime.strptime(max_date , '%Y-%m-%d') - relativedelta(days=window_allocation)
-    data_ = data[data["Date"] >= begin_date.strftime('%Y-%m-%d')]
-    data_agr = data_.groupby(["asset"],as_index=False).agg(allocation=(f"hat_optimal_asset_future_return","mean"))
-    data_agr["allocation"] = data_agr["allocation"]*100
-    data_agr["allocation"] = data_agr["allocation"].round(2)
-    data_agr['asset_cat'] = pd.Categorical(
-        data_agr['asset'], 
-        categories=stock_codes, 
-        ordered=True
-    )
-    data_agr = data_agr.sort_values('asset_cat')
+    data_agr = get_andromeda_last(data, stock_codes, window_allocation)
     fig.add_trace(go.Pie(labels=data_agr["asset"],values=data_agr["allocation"],
                          textinfo='label+value+percent',
                          showlegend=False,marker=dict(colors=new_color_list), hole=.3), row=1, col=1)
@@ -321,13 +329,16 @@ def pie_plots_benchmarks(data, target_variables,asset2color,window_allocation=4)
     fig.update_layout(height=+500, width=1200, title_text="individual benchmarks and allocations")
     return fig
 
-def sirius_summary_plot(data, asset2color,window=4):
+def get_sirius_last(data, window = 7):
     data[f'mean_proba_target_down'] = data.groupby(['asset'])["proba_target_down"].rolling(window,min_periods=2).mean().reset_index(level=0, drop=True)
     data[f'mean_proba_target_up'] = data.groupby(['asset'])["proba_target_up"].rolling(window,min_periods=2).mean().reset_index(level=0, drop=True)
     data['rn'] = data.sort_values("Date",ascending=False).groupby(['asset']).cumcount()+1
     data["diff"] =  data[f'mean_proba_target_down'] - data[f'mean_proba_target_up']
     result = data[(data["rn"] == 1)].sort_values("diff",ascending=False)
+    return result
 
+def sirius_summary_plot(data, asset2color, window=4):
+    result = get_sirius_last(data, window)
     fig = make_subplots(rows=1, cols=1)
     for asset in result.asset.unique():
         color = asset2color.get(asset)
@@ -388,4 +399,41 @@ def plot_vol_clusters(data,clusters, date, features,trad_days=14,lags=3):
     fig.update_xaxes(title_text="Current Volatility", row=1, col=1)
     fig.update_yaxes(title_text="Cluster", row=1, col=1)
     fig.update_layout(height=500, width=700, title_text="Clustered assets")
+    return fig
+
+def get_last_volatilities(data, lags, date, features, trad_days=14):
+    data=data[data["Date"] >= date].sort_values("Date").set_index("Date").copy()
+    for code in features:
+        data[code] = np.log(data[code]/data[code].shift(lags))
+        data[code] = np.square(data[code])
+        data[code] = data[code].rolling(window = trad_days).std()*np.sqrt(252)
+    df = data.sort_index().tail(1)
+    return df.melt(value_vars=features,var_name="asset",value_name="volatility")
+
+def plot_parallel_summary(data_vol, data_sirius, data_andromeda, tickers):
+    df_summary = (
+        data_vol
+        .merge(data_sirius, on=["asset"])
+        .merge(data_andromeda, on=["asset"])
+    )
+    vals_pass =list(range(len(tickers)))
+    fig = make_subplots(rows=1, cols=1)
+    fig.add_trace(
+        go.Parcoords(
+            line = dict(cmax=25),
+            dimensions = list([
+                dict(
+                    label = 'asset', values = vals_pass, ticktext = tickers, tickvals = vals_pass ),
+                dict(
+                    label = 'volatility', values = df_summary['volatility']),
+                dict(
+                    label = 'prob go down', values = df_summary['mean_proba_target_up']),
+                dict(
+                    label = 'prob go up', values = df_summary['mean_proba_target_down']),
+                dict(
+                    label = 'allocation', values = df_summary['allocation']),
+            ])
+        )
+    )
+    fig.update_layout(height=500, width=700, title_text="Summary")
     return fig
