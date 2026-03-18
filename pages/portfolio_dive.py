@@ -101,6 +101,7 @@ cluster_treshold = st.number_input('cluster threshold', value=0.7)
 on_allocator = st.toggle('Activate allocator model')
 
 tab_overview, allocation, sirius, summary = st.tabs(['overview',"allocation", "sirius", "end summary"])
+success_sirius=False
 
 if st.button("run"):
     with st.spinner('.......................... Now loading ..........................'):
@@ -250,7 +251,7 @@ if st.button("run"):
                 success_sirius=True
 
         with summary:
-            if success_sirius and succcess_main_page:
+            if success_sirius and succcess_main_page and on_allocator:
                 df_vol = get_last_volatilities(object_stock.df, lags_mid, begin_date, tickers)
                 df_sirius_last = get_sirius_last(sirius_df, witdh_df)
                 df_andromeda_last = get_andromeda_last(allocator_df, tickers, witdh_df)
