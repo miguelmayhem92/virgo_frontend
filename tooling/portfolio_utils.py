@@ -420,7 +420,10 @@ def plot_parallel_summary(data_vol, data_sirius, data_andromeda, tickers):
     fig = make_subplots(rows=1, cols=1)
     fig.add_trace(
         go.Parcoords(
-            line = dict(cmax=25),
+            line = dict(
+                cmax=25,
+                color = list(range(len(tickers)))
+            ),
             dimensions = list([
                 dict(
                     label = 'asset', values = vals_pass, ticktext = tickers, tickvals = vals_pass ),
