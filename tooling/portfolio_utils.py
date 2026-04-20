@@ -343,10 +343,10 @@ def sirius_summary_plot(data, asset2color, window=4):
     for asset in result.asset.unique():
         color = asset2color.get(asset)
         df = result[result.asset == asset]
-        fig.add_trace(go.Scatter(x=df["asset"],y=df[f"mean_proba_target_down"],marker_size=15,hovertemplate="prob go up: %{y}",
-                                 name=asset,legendgroup=asset,line_color=color,marker_symbol="triangle-up"), row=1, col=1)
-        fig.add_trace(go.Scatter(x=df["asset"],y=df[f"mean_proba_target_up"],marker_size=15,hovertemplate="prob go down: %{y}",
-                                 name=asset,legendgroup=asset,showlegend=False,marker_symbol="triangle-down",line_color=color), row=1, col=1)
+        fig.add_trace(go.Scatter(x=df["asset"],y=df[f"mean_proba_target_down"],marker_size=15,hovertemplate="prob go down: %{y}",
+                                 name=asset,legendgroup=asset,line_color=color,marker_symbol="triangle-down"), row=1, col=1)
+        fig.add_trace(go.Scatter(x=df["asset"],y=df[f"mean_proba_target_up"],marker_size=15,hovertemplate="prob go up: %{y}",
+                                 name=asset,legendgroup=asset,showlegend=False,marker_symbol="triangle-up",line_color=color), row=1, col=1)
     fig.update_layout(height=400, width=1200, title_text="sirius probas summary")
     return fig
 
