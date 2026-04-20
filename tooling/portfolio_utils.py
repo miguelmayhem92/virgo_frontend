@@ -96,14 +96,14 @@ def asset_to_color(stock_codes, target_variable):
 def sirius_in_allocator_plot(data_plot,map_targets, asset2color, data_window=550, window=4, batch=3):
     int_map = {
         'proba_target_down':{
-            "arrow":"triangle-up",
+            "arrow":"triangle-down",
             "line_type":"dash",
-            "label":"go up"
+            "label":"go down"
         },
         'proba_target_up':{
-            "arrow":"triangle-down",
+            "arrow":"triangle-up",
             "line_type":"dot",
-            "label":"go down"
+            "label":"go up"
         },
     }
     assets = list(data_plot.asset.unique())
