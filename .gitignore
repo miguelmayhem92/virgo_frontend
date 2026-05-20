@@ -1,3 +1,4 @@
 secrets.toml
 .ipynb_checkpoints/
 __pycache__/
+.vscode/

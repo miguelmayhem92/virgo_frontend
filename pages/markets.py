@@ -1,13 +1,15 @@
-import streamlit as st
-import plotly
+import time
 import json
 import yaml
 from pathlib import Path
-from utils import get_connection
-from utils import logo, print_object, dowload_any_object, get_connection
 
+import streamlit as st
+import plotly
 from virgo_modules.src.re_utils import produce_plotly_plots
-import time
+
+from utils import get_connection
+from utils import logo, dowload_any_object, get_connection
+from tooling.forecasting import plot_forecastings
 from auth_utils_cognito_v2 import menu_with_redirect
 
 configs = yaml.safe_load(Path('configs.yaml').read_text())
@@ -73,7 +75,22 @@ if st.button('Launch'):
         data_frame = dowload_any_object('dataframe.csv', f'market_plots/{index_symbol}/', 'csv',bucket)
         t_matrix = dowload_any_object('tmatrix.txt', f'market_plots/{index_symbol}/', 'txt', bucket)
         data_configs = dowload_any_object('asset_configs.json', f'market_plots/{index_symbol}/', 'json',bucket)
-        forecastings = dowload_any_object('batch_predictions_csv.csv', f'market_plots/{index_symbol}/', 'csv',bucket)
+        forecastings = dowload_any_object('batch_predictions_csv.csv', f'market_plots/{index_symbol}/', 'csv', bucket)
+
+        average_1step_forecast = dowload_any_object("average_1step_forecast.csv", 'shenlong_forecasts/index_forecast/', 'csv', bucket)
+        average_25_1step_forecast = dowload_any_object("average_25_1step_forecast.csv", 'shenlong_forecasts/index_forecast/', 'csv', bucket)
+        average_75_1step_forecast = dowload_any_object("average_75_1step_forecast.csv", 'shenlong_forecasts/index_forecast/', 'csv', bucket)
+        conformal_25_result_df = dowload_any_object("conformal_25_result_df.csv", 'shenlong_forecasts/index_forecast/', 'csv', bucket)
+        conformal_75_result_df = dowload_any_object("conformal_75_result_df.csv", 'shenlong_forecasts/index_forecast/', 'csv', bucket)
+        result_df = dowload_any_object("result_df.csv", 'shenlong_forecasts/index_forecast/', 'csv', bucket)
+        data_caontainer = {
+            "average_1step_forecast":average_1step_forecast,
+            "average_25_1step_forecast":average_25_1step_forecast,
+            "average_75_1step_forecast":average_75_1step_forecast,
+            "conformal_25_result_df":conformal_25_result_df,
+            "conformal_75_result_df":conformal_75_result_df,
+            "result_df":result_df,
+        }
 
         plotter = produce_plotly_plots(index_symbol, data_frame,data_configs,save_path = False,save_aws = False,show_plot = False, return_figs = True)
 
@@ -107,7 +124,7 @@ if st.button('Launch'):
                     st.plotly_chart(fig, use_container_width=True)
                 
                 elif plot_name == "forecastings":
-                    fig = plotter.produce_forecasting_plot(forecastings)
+                    fig = plot_forecastings(index_symbol, data_caontainer, n_obs=150)
                     st.plotly_chart(fig, use_container_width=True)
 
                 # features_ = ['volatility_log_return', 'rel_MA_spread','RSI']
