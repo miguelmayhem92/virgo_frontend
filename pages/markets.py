@@ -92,7 +92,8 @@ if st.button('Launch'):
             "result_df":result_df,
         }
 
-        plotter = produce_plotly_plots(index_symbol, data_frame,data_configs,save_path = False,save_aws = False,show_plot = False, return_figs = True)
+        data_configs["settings"]["relative_spread_ma"] = {"ma1": 7, "ma2": 14} # fixme or delete me later
+        plotter = produce_plotly_plots(index_symbol, data_frame, data_configs,save_path = False,save_aws = False,show_plot = False, return_figs = True)
 
         with tab_overview:
 
