@@ -201,7 +201,11 @@ def plot_ts_allocations(data,stock_codes, target_variables, asset2color, window=
         fig.add_trace(go.Scatter(x=aggr["Date"],y=aggr[f"q25_{feature}"],name=tag,legendgroup=tag, showlegend=False,line_color=color), row=3, col=2)
         fig.add_trace(go.Scatter(x=aggr["Date"],y=aggr[f"q50_{feature}"],name=tag,legendgroup=tag, showlegend=False,line_color=color), row=3, col=2)
         fig.add_trace(go.Scatter(x=aggr["Date"],y=aggr[f"q75_{feature}"],name=tag,legendgroup=tag, showlegend=False,line_color=color), row=3, col=2)
-   
+    
+    fig.add_hline(y=0, line_dash="dot", row=2, col=1,line_color="green")
+    fig.add_hline(y=0, line_dash="dot", row=3, col=1,line_color="green")
+    fig.add_hline(y=0, line_dash="dot", row=2, col=2,line_color="green")
+    fig.add_hline(y=0, line_dash="dot", row=3, col=2,line_color="green")
     fig.update_layout(height=+900, width=1200, title_text="time series, candidates and benchmarks")
     return fig
 
