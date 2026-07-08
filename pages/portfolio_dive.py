@@ -98,14 +98,16 @@ if st.button("add"):
     str_asset_list = ",".join(tickers)
     st.write(f"selected assets: {str_asset_list}")
 
-lags_short = st.number_input('short term lag', 3)
-lags_mid= st.number_input('mid term lag', 7)
-trade_days = st.number_input('trading days', 7)
+lags_short = st.number_input('short term lag', value=3)
+lags_mid= st.number_input('mid term lag', value=7)
+trade_days = st.number_input('trading days', value=7)
 
-date_back = datetime.datetime.now() - relativedelta(days=100)
+window = st.number_input('window days', value=150)
+date_back = datetime.datetime.now() - relativedelta(days=window)
 date_back_str = date_back.strftime("%Y-%m-%d")
 begin_date = st.text_input('Begin date', date_back_str)
 
+number_clusters = st.number_input('number of clusters', min_value=2, value=5)
 cluster_treshold = st.number_input('cluster threshold', value=0.7)
 
 on_allocator = st.toggle('Activate allocator model')
@@ -138,15 +140,13 @@ if st.button("run"):
                 except Exception:
                     st.error(f"{code} not found")
             st.write("### Correlograms:")
-
-
             returns = return_matrix(object_stock.df, tickers, lags_short, apply_log=True)
-            returns = returns[tickers]
+            returns = returns[tickers].copy()
             returns = returns.subtract(returns.mean(axis=0), axis=1)
             returns = returns / returns.std()
             sorted_correlations = compute_sorted_correlations(returns)
             returns = returns[sorted_correlations.columns.tolist()]
-            clusters = produce_clusters(5, sorted_correlations)
+            clusters = produce_clusters(number_clusters, sorted_correlations)
             sorted_clusters = sort_clusters(clusters)
             plot_1 = plot_cluster(sorted_clusters, sorted_correlations)
 
@@ -156,17 +156,9 @@ if st.button("run"):
             HPCA_corr = get_hpca_correlations(sorted_correlations, coin_to_cluster, betas, eigen_clusters)
             plot_2 = plot_cluster(sorted_clusters, HPCA_corr)
 
-            # correlations = df_rets[tickers].corr(method="spearman")
-            # plot1 = sns.clustermap(correlations, method="complete", cmap='RdBu', annot=True, 
-            #             annot_kws={"size": 9}, vmin=-1, vmax=1, figsize=(6,7))
             buf1 = BytesIO()
             plot_1.savefig(buf1, format="png")
 
-            # df_rets = return_matrix(object_stock.df, tickers, lags_mid, apply_log=True)
-            # correlations = df_rets[tickers].corr(method="spearman")
-
-            # plot2 = sns.clustermap(correlations, method="complete", cmap='RdBu', annot=True, 
-            #             annot_kws={"size": 9}, vmin=-1, vmax=1, figsize=(6,7))
             buf2 = BytesIO()
             plot_2.savefig(buf2, format="png")
 
