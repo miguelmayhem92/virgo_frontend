@@ -7,7 +7,6 @@ import time
 
 import pandas as pd
 from pathlib import Path
-import seaborn as sns
 import streamlit as st
 import matplotlib.pyplot as plt
 from utils import logo, execute_state_machine_allocator, dowload_any_object, find_info
@@ -22,13 +21,24 @@ from tooling.portfolio_utils import (
     pie_plots_candidates, 
     pie_plots_benchmarks, 
     sirius_summary_plot,
-    get_corr_clusters,
     plot_vol_clusters,
     plot_parallel_summary,
     get_last_volatilities,
     get_sirius_last,
     get_andromeda_last
 )
+from tooling.pca_utils import (
+    compute_sorted_correlations,
+    produce_clusters,
+    sort_clusters,
+    plot_cluster,
+    get_eigen_clusters,
+    get_coin_to_cluster,
+    get_betas,
+    get_hpca_correlations,
+    get_cluster_members
+)
+
 
 configs = yaml.safe_load(Path('configs.yaml').read_text())
 debug_mode = configs["debug_mode"]
@@ -60,7 +70,7 @@ st.write(
 if st.session_state.role == 'guest':
     symbols_ = list(guest_symbols.keys())
     st.write(
-        f"""
+        """
         select one from the list:
         """
     )  
@@ -125,24 +135,40 @@ if st.button("run"):
             for code in tickers[1:]:
                 try:
                     object_stock.extract_sec_data(code, ["Date","Close"], {"Close":code})
-                except:
+                except Exception:
                     st.error(f"{code} not found")
             st.write("### Correlograms:")
-            df_rets = return_matrix(object_stock.df, tickers, lags_short, apply_log=True)
-            correlations = df_rets[tickers].corr(method="spearman")
 
-            plot1 = sns.clustermap(correlations, method="complete", cmap='RdBu', annot=True, 
-                        annot_kws={"size": 9}, vmin=-1, vmax=1, figsize=(6,7))
+
+            returns = return_matrix(object_stock.df, tickers, lags_short, apply_log=True)
+            returns = returns[tickers]
+            returns = returns.subtract(returns.mean(axis=0), axis=1)
+            returns = returns / returns.std()
+            sorted_correlations = compute_sorted_correlations(returns)
+            returns = returns[sorted_correlations.columns.tolist()]
+            clusters = produce_clusters(5, sorted_correlations)
+            sorted_clusters = sort_clusters(clusters)
+            plot_1 = plot_cluster(sorted_clusters, sorted_correlations)
+
+            eigen_clusters = get_eigen_clusters(sorted_clusters, sorted_correlations, returns)
+            coin_to_cluster = get_coin_to_cluster(sorted_clusters, sorted_correlations)
+            betas = get_betas(eigen_clusters, returns, coin_to_cluster)
+            HPCA_corr = get_hpca_correlations(sorted_correlations, coin_to_cluster, betas, eigen_clusters)
+            plot_2 = plot_cluster(sorted_clusters, HPCA_corr)
+
+            # correlations = df_rets[tickers].corr(method="spearman")
+            # plot1 = sns.clustermap(correlations, method="complete", cmap='RdBu', annot=True, 
+            #             annot_kws={"size": 9}, vmin=-1, vmax=1, figsize=(6,7))
             buf1 = BytesIO()
-            plot1.savefig(buf1, format="png")
+            plot_1.savefig(buf1, format="png")
 
-            df_rets = return_matrix(object_stock.df, tickers, lags_mid, apply_log=True)
-            correlations = df_rets[tickers].corr(method="spearman")
+            # df_rets = return_matrix(object_stock.df, tickers, lags_mid, apply_log=True)
+            # correlations = df_rets[tickers].corr(method="spearman")
 
-            plot2 = sns.clustermap(correlations, method="complete", cmap='RdBu', annot=True, 
-                        annot_kws={"size": 9}, vmin=-1, vmax=1, figsize=(6,7))
+            # plot2 = sns.clustermap(correlations, method="complete", cmap='RdBu', annot=True, 
+            #             annot_kws={"size": 9}, vmin=-1, vmax=1, figsize=(6,7))
             buf2 = BytesIO()
-            plot2.savefig(buf2, format="png")
+            plot_2.savefig(buf2, format="png")
 
             f, ax = plt.subplots(1,2)
             buf1.seek(0)
@@ -168,7 +194,9 @@ if st.button("run"):
             succcess_main_page = True
 
             #cluster volatility
-            clusters = get_corr_clusters(correlations, threshold=cluster_treshold)
+            clusters = get_cluster_members(sorted_clusters, HPCA_corr)
+            clusters = [v for v in clusters.values()]
+            # clusters = get_corr_clusters(correlations, threshold=cluster_treshold)
             n_t = [c for c in clusters if len(c) > 1]
             if len(n_t) >= 1:
                 plot=plot_vol_clusters(object_stock.df, clusters, begin_date, tickers,lags=lags_mid)
@@ -191,7 +219,7 @@ if st.button("run"):
                         elapsed_time = current_execution_time - execution_time
                         hours_elapsed = divmod(elapsed_time.total_seconds(), 60*60)[0]
                         return hours_elapsed
-                    except:
+                    except Exception:
                         hours_elapsed=24
                         return hours_elapsed
                 
@@ -208,8 +236,8 @@ if st.button("run"):
                         continue
                     else:
                         print("done! step machine finished")
-                        allocator_df = dowload_any_object(allocator_name, f'edge_models/andromeda/consolidate/', 'csv', bucket)
-                        sirius_df = dowload_any_object(sirius_name, f'edge_models/andromeda/consolidate/', 'csv', bucket)
+                        allocator_df = dowload_any_object(allocator_name, 'edge_models/andromeda/consolidate/', 'csv', bucket)
+                        sirius_df = dowload_any_object(sirius_name, 'edge_models/andromeda/consolidate/', 'csv', bucket)
                         break
                 # producing dashboards!!!
                 asset2color = asset_to_color(tickers, targets)

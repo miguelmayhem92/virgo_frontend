@@ -19,7 +19,8 @@ starlette==0.22.0
 yfinance==0.2.58
 ta==0.10.2
 statsmodels==0.13.5
-hmmlearn == 0.3.3
+hmmlearn==0.3.3
 feature-engine==1.8.3
 mlflow==3.0.0
 mapie==1.0.1
+fastcluster==1.2.6
