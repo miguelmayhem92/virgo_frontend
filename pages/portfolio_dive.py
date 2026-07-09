@@ -1,3 +1,4 @@
+import itertools
 from io import BytesIO
 import datetime
 from dateutil.relativedelta import relativedelta
@@ -179,9 +180,10 @@ if st.button("run"):
             ax[1].set_title(f"correlogram for {lags_mid} lags", fontsize=5)
             st.pyplot(f)
 
-
+            clusters = get_cluster_members(sorted_clusters, HPCA_corr)
+            tickers_sorted = list(itertools.chain.from_iterable(([v for v in clusters.values()])))
             # time series and volatility
-            plot=filter_scale_ts(object_stock.df, begin_date, tickers,trad_days = trade_days,lags=lags_short)
+            plot=filter_scale_ts(object_stock.df, begin_date, tickers_sorted,trad_days = trade_days,lags=lags_short)
             st.plotly_chart(plot, use_container_width=True)
             succcess_main_page = True
 
