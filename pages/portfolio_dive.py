@@ -183,7 +183,10 @@ if st.button("run"):
             clusters = get_cluster_members(sorted_clusters, HPCA_corr)
             tickers_sorted = list(itertools.chain.from_iterable(([v for v in clusters.values()])))
             # time series and volatility
-            plot=filter_scale_ts(object_stock.df, begin_date, tickers_sorted,trad_days = trade_days,lags=lags_short)
+            plot=filter_scale_ts(object_stock.df, begin_date,
+                                  tickers_sorted,
+                                  trad_days = trade_days,lags=lags_short,
+                                  asset2colors=asset_to_color(tickers, targets))
             st.plotly_chart(plot, use_container_width=True)
             succcess_main_page = True
 
@@ -193,7 +196,8 @@ if st.button("run"):
             # clusters = get_corr_clusters(correlations, threshold=cluster_treshold)
             n_t = [c for c in clusters if len(c) > 1]
             if len(n_t) >= 1:
-                plot=plot_vol_clusters(object_stock.df, clusters, begin_date, tickers,lags=lags_mid)
+                plot=plot_vol_clusters(object_stock.df, clusters, begin_date, tickers,lags=lags_mid,
+                                       asset2colors=asset_to_color(tickers, targets))
                 st.plotly_chart(plot, use_container_width=True)
             else:
                 st.write("no clusters found")

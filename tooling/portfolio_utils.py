@@ -52,15 +52,14 @@ def return_matrix(data, features, lags, apply_log=False):
             data[code] = data[code]/data[code].shift(lags)-1
     return data.dropna()
 
-def filter_scale_ts(data, date, features,trad_days = 7,lags=3):
+def filter_scale_ts(data, date, features,trad_days = 7,lags=3, asset2colors:dict=dict()):
     df = data[data["Date"] >= date].sort_values("Date").set_index("Date").copy()
     df_1 = df.iloc[0]
     df = df/df_1
     subtitles = ["prices", "volatility"]
     fig = make_subplots(rows=2, cols=1,shared_xaxes=True,vertical_spacing=0.02,subplot_titles=subtitles)
-    colors = COLOR_LIST
     for i,code in enumerate(features):
-        color=colors[i%len(colors)]
+        color=asset2colors.get(code, "gray") 
         fig.add_trace(go.Scatter(x=df.index, y=df[code],
                     mode='lines+markers',
                     legendgroup=code,
@@ -72,7 +71,7 @@ def filter_scale_ts(data, date, features,trad_days = 7,lags=3):
         data[code] = np.square(data[code])
         data[code] = data[code].rolling(window = trad_days).std()*np.sqrt(252)
     for i,code in enumerate(features):
-        color=colors[i%len(colors)]
+        color= asset2colors.get(code, "gray")
         fig.add_trace(go.Scatter(x=data.index, y=data[code],
                     mode='lines+markers',
                     legendgroup=code,
@@ -377,22 +376,17 @@ def get_corr_clusters(correlations, threshold=0.3):
          clusters.append(cluster)
     return clusters
 
-def plot_vol_clusters(data,clusters, date, features,trad_days=14,lags=3):
+def plot_vol_clusters(data,clusters, date, features,trad_days=14,lags=3, asset2colors:dict=dict()):
     data=data[data["Date"] >= date].sort_values("Date").set_index("Date").copy()
-    colors= COLOR_LIST
     for code in features:
         data[code] = np.log(data[code]/data[code].shift(lags))
         data[code] = np.square(data[code])
         data[code] = data[code].rolling(window = trad_days).std()*np.sqrt(252)
     df = data.sort_index().tail(1)
-    color_dict=dict()
     fig = make_subplots(rows=1, cols=1,shared_xaxes=True,vertical_spacing=0.02)
-    for i,code in enumerate(features):
-        color=colors[i%len(colors)]
-        color_dict[code] = color
     for j, cluster in enumerate(clusters):
         for code in cluster:
-            color = color_dict[code]
+            color = asset2colors.get(code, "gray")
             vol = df[code].values[0]
             fig.add_trace(go.Scatter(x=[vol], y=[j],
                     mode='lines+markers',
