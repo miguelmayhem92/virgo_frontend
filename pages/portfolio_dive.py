@@ -77,9 +77,15 @@ if st.session_state.role == 'guest':
     )  
     st.write(guest_symbols)
 
-symbol_name = st.text_input('Asset symbol', 'PEP,LMT')
-tickers = symbol_name.split(",")
-tickers = [x.strip() for x in tickers]
+main_symbol_name = st.text_input('Main asset symbols', 'VLUE, EWJ')
+main_tickers = main_symbol_name.split(",")
+tickers_main = list(set([x.strip() for x in main_tickers]))
+
+symbol_name = st.text_input('Secondary asset symbols', 'PEP, LMT')
+symbol_tickers = symbol_name.split(",")
+tickers_complement = list(set([x.strip() for x in symbol_tickers]))
+
+tickers = list(set(tickers_main + tickers_complement))
 
 def inspect(asset_list, guest_symbols):
     rejected = list()
@@ -149,13 +155,13 @@ if st.button("run"):
             returns = returns[sorted_correlations.columns.tolist()]
             clusters = produce_clusters(number_clusters, sorted_correlations)
             sorted_clusters = sort_clusters(clusters)
-            plot_1 = plot_cluster(sorted_clusters, sorted_correlations)
+            plot_1 = plot_cluster(sorted_clusters, sorted_correlations, flag_items=tickers_main)
 
             eigen_clusters = get_eigen_clusters(sorted_clusters, sorted_correlations, returns)
             coin_to_cluster = get_coin_to_cluster(sorted_clusters, sorted_correlations)
             betas = get_betas(eigen_clusters, returns, coin_to_cluster)
             HPCA_corr = get_hpca_correlations(sorted_correlations, coin_to_cluster, betas, eigen_clusters)
-            plot_2 = plot_cluster(sorted_clusters, HPCA_corr)
+            plot_2 = plot_cluster(sorted_clusters, HPCA_corr, flag_items=tickers_main)
 
             buf1 = BytesIO()
             plot_1.savefig(buf1, format="png")
@@ -186,7 +192,8 @@ if st.button("run"):
             plot=filter_scale_ts(object_stock.df, begin_date,
                                   tickers_sorted,
                                   trad_days = trade_days,lags=lags_short,
-                                  asset2colors=asset_to_color(tickers, targets))
+                                  asset2colors=asset_to_color(tickers, targets),
+                                  flag_items=tickers_main)
             st.plotly_chart(plot, use_container_width=True)
             succcess_main_page = True
 
@@ -197,7 +204,8 @@ if st.button("run"):
             n_t = [c for c in clusters if len(c) > 1]
             if len(n_t) >= 1:
                 plot=plot_vol_clusters(object_stock.df, clusters, begin_date, tickers,lags=lags_mid,
-                                       asset2colors=asset_to_color(tickers, targets))
+                                       asset2colors=asset_to_color(tickers, targets),
+                                       flag_items=tickers_main)
                 st.plotly_chart(plot, use_container_width=True)
             else:
                 st.write("no clusters found")
@@ -239,9 +247,9 @@ if st.button("run"):
                         break
                 # producing dashboards!!!
                 asset2color = asset_to_color(tickers, targets)
-                fig1 = pie_plots_candidates(allocator_df, tickers,asset2color)
-                fig2 = pie_plots_benchmarks(allocator_df, targets, asset2color)
-                fig3 = plot_ts_allocations(allocator_df,tickers, targets, asset2color)
+                fig1 = pie_plots_candidates(allocator_df, tickers,asset2color, flag_items=tickers_main)
+                fig2 = pie_plots_benchmarks(allocator_df, targets, asset2color, flag_items=tickers_main)
+                fig3 = plot_ts_allocations(allocator_df,tickers, targets, asset2color, flag_items=tickers_main)
                 st.write("""
                     The allocation shows suggestion of how much to invest in an asset given some benchmarks:
                     * the benchmarks are a group of indexes that are weakly correlated but that are robust in terms of return and volatility
@@ -270,9 +278,9 @@ if st.button("run"):
                          * Arrow up -> probability to go up
                 """)
                 st.dataframe(info_collect_df, width=witdh_df)
-                fig = sirius_summary_plot(sirius_df,asset2color)
+                fig = sirius_summary_plot(sirius_df,asset2color, flag_items=tickers_main)
                 st.plotly_chart(fig, use_container_width=True)
-                fig3 =sirius_in_allocator_plot(sirius_df, map_targets, asset2color)
+                fig3 =sirius_in_allocator_plot(sirius_df, map_targets, asset2color, flag_items=tickers_main)
                 st.plotly_chart(fig3, use_container_width=True)
                 success_sirius=True
 
@@ -281,6 +289,6 @@ if st.button("run"):
                 df_vol = get_last_volatilities(object_stock.df, lags_mid, begin_date, tickers)
                 df_sirius_last = get_sirius_last(sirius_df, witdh_df)
                 df_andromeda_last = get_andromeda_last(allocator_df, tickers, witdh_df)
-                fig5 = plot_parallel_summary(df_vol, df_sirius_last, df_andromeda_last, tickers)
+                fig5 = plot_parallel_summary(df_vol, df_sirius_last, df_andromeda_last, tickers, flag_items=tickers_main)
                 st.plotly_chart(fig5, use_container_width=True)
 

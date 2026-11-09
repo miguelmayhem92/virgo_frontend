@@ -10,6 +10,7 @@ import fastcluster
 from scipy.cluster import hierarchy
 import seaborn as sns
 
+SUFFIX = "**"
 
 def compute_sorted_correlations(returns, corr_estimator='pearson'):
     corr = returns.corr(method=corr_estimator)
@@ -43,13 +44,18 @@ def sort_clusters(clusters):
         sorted_clusters[cluster] = clusters[permutation[cluster - 1][1]]
     return sorted_clusters
 
-def plot_cluster(clusters, correlations, display=False):
+def plot_cluster(clusters, correlations, display=False, flag_items:list = []):
     order = list(correlations.columns)
     order = order.copy()
     order = list(reversed(order))
     dim = len(correlations)
     fig = plt.figure(figsize=(10, 10))
-    _ = sns.heatmap(correlations.loc[order,:].round(2), annot=True, cmap='RdYlGn',center=0)
+
+    data = correlations.loc[order, :].round(2)
+    data.index = [f"{name}{SUFFIX}" if name in flag_items else name for name in data.index]
+    data.columns = [f"{name}{SUFFIX}" if name in flag_items else name for name in data.columns]
+
+    _ = sns.heatmap(data, annot=True, cmap='RdYlGn', center=0)
     for cluster_id, cluster in clusters.items():
         xmin, xmax = min(cluster), max(cluster) # fix
         ymin, ymax = min(cluster), max(cluster)
@@ -59,11 +65,11 @@ def plot_cluster(clusters, correlations, display=False):
         plt.axvline(x=xmax + 1,
                     ymin=ymin / dim, ymax=(ymax + 1) / dim,
                     color='black')
-        
+
         plt.axhline(y=dim - ymin,
                     xmin=xmin / dim, xmax=(xmax + 1) / dim,
                     color='black')
-        plt.axhline(y=dim - ymax - 1, 
+        plt.axhline(y=dim - ymax - 1,
                     xmin=xmin / dim, xmax=(xmax + 1) / dim,
                     color='black')
     plt.tight_layout()

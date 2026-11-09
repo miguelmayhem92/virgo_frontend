@@ -42,6 +42,8 @@ bench_map = {
     "bench5":"copper"
 }
 
+SUFFIX = "**"
+
 def return_matrix(data, features, lags, apply_log=False):
     data = data.sort_values("Date").copy()
     if apply_log:
@@ -52,7 +54,10 @@ def return_matrix(data, features, lags, apply_log=False):
             data[code] = data[code]/data[code].shift(lags)-1
     return data.dropna()
 
-def filter_scale_ts(data, date, features,trad_days = 7,lags=3, asset2colors:dict=dict()):
+def _add_suffix(code, flag_items:list=[]):
+    return f"{code}{SUFFIX}" if code in flag_items else code
+
+def filter_scale_ts(data, date, features,trad_days = 7,lags=3, asset2colors:dict=dict(), flag_items:list=[]):
     df = data[data["Date"] >= date].sort_values("Date").set_index("Date").copy()
     df_1 = df.iloc[0]
     df = df/df_1
@@ -64,7 +69,7 @@ def filter_scale_ts(data, date, features,trad_days = 7,lags=3, asset2colors:dict
                     mode='lines+markers',
                     legendgroup=code,
                     line = dict(color=color),
-                    name=code),col=1,row=1)
+                    name=_add_suffix(code, flag_items)),col=1,row=1)
     data=data[data["Date"] >= date].sort_values("Date").set_index("Date").copy()
     for code in features:
         data[code] = np.log(data[code]/data[code].shift(lags))
@@ -77,7 +82,7 @@ def filter_scale_ts(data, date, features,trad_days = 7,lags=3, asset2colors:dict
                     legendgroup=code,
                     showlegend=False,
                     line = dict(color=color),
-                    name=code),col=1,row=2)
+                    name=_add_suffix(code, flag_items)),col=1,row=2)
     fig.update_layout(height=700,width=1000,title="Time series view of multiple assets")
     return fig
 
@@ -92,7 +97,7 @@ def asset_to_color(stock_codes, target_variable):
     asset2color = {x:next(colors) for x in full_asset_list}
     return asset2color
 
-def sirius_in_allocator_plot(data_plot,map_targets, asset2color, data_window=550, window=4, batch=3):
+def sirius_in_allocator_plot(data_plot,map_targets, asset2color, data_window=550, window=4, batch=3, flag_items:list=[]):
     int_map = {
         'proba_target_down':{
             "arrow":"triangle-down",
@@ -113,11 +118,12 @@ def sirius_in_allocator_plot(data_plot,map_targets, asset2color, data_window=550
     for j,asset_name in enumerate(data_plot.asset.unique(),start=1):
         color = asset2color.get(asset_name)
         df = data_plot[data_plot.asset == asset_name].iloc[-data_window:].copy()
+        asset_name = _add_suffix(asset_name, flag_items)
         rowi = math.ceil(j/batch)
         for k,target in enumerate(map_targets.keys()):
             arrow = int_map[target]["arrow"]
             dot_type = int_map[target]["line_type"]
-            label = int_map[target]["label"]
+            _ = int_map[target]["label"]
             legend = True if k == 0 else False
             df[f"smooth_{target}"] = df.sort_values("Date")[target].rolling(window,min_periods=1).mean()
             fig.add_trace(go.Scatter(
@@ -130,7 +136,7 @@ def sirius_in_allocator_plot(data_plot,map_targets, asset2color, data_window=550
     return fig
 
 
-def plot_ts_allocations(data,stock_codes, target_variables, asset2color, window=100):
+def plot_ts_allocations(data,stock_codes, target_variables, asset2color, window=100, flag_items:list=[]):
     fig = make_subplots(rows=3, cols=2, shared_xaxes=True,
                     subplot_titles=["Prices - Candidates","Prices - Benchmarks", "estimations","estimations","observed","observed"],vertical_spacing=0.08)
     new_color_list = list()
@@ -140,13 +146,14 @@ def plot_ts_allocations(data,stock_codes, target_variables, asset2color, window=
             color = asset2color.get(asset)
             df = data[data["asset"]==asset].sort_values("Date").iloc[-window:]
             init = df["Close"].iloc[0]
+            asset = _add_suffix(asset, flag_items)
             fig.add_trace(go.Scatter(x=df["Date"],y=df["Close"]/init,name=asset, showlegend=True,legendgroup=asset,line_color=color), row=1, col=1)
-            feature = f"hat_optimal_asset_future_return"
+            feature = "hat_optimal_asset_future_return"
             fig.add_trace(go.Scatter(x=df["Date"],y=df[feature],name=asset,legendgroup=asset,line_color=color, showlegend=False), row=2, col=1)
-            feature = f"optimal_asset_future_return"
+            feature = "optimal_asset_future_return"
             fig.add_trace(go.Scatter(x=df["Date"],y=df[feature],name=asset,legendgroup=asset,line_color=color, showlegend=False), row=3, col=1)
             new_color_list.append(color)
-        except:
+        except Exception as _:
             continue
 
     ## benchmark allocations
@@ -224,22 +231,23 @@ def get_andromeda_last(data, stock_codes, window_allocation=7):
     data_agr = data_agr.sort_values('asset_cat')
     return data_agr
 
-def pie_plots_candidates(data,stock_codes,asset2color, window_allocation=4):
+def pie_plots_candidates(data,stock_codes, asset2color, window_allocation=4, flag_items:list=[]):
     fig = make_subplots(rows=1, cols=2,
                         specs=[[{"type": "domain"}, {"type": "domain"}]],
                         subplot_titles=["estimated candidates", "observed"],vertical_spacing=0.08)
-    n_colors= len(COLOR_LIST)
     new_color_list = list()
     for i,asset in enumerate(stock_codes):
         try:
             color = asset2color.get(asset)
             df = data[data["asset"]==asset].sort_values("Date")
             new_color_list.append(color)
-        except:
+        except Exception as _:
             continue
     max_date = data["Date"].max()
     data_agr = get_andromeda_last(data, stock_codes, window_allocation)
-    fig.add_trace(go.Pie(labels=data_agr["asset"],values=data_agr["allocation"],
+    data_agr_renamed = data_agr
+    data_agr_renamed["asset"] = np.where(data_agr_renamed["asset"].isin(flag_items), data_agr_renamed["asset"].astype(str) + SUFFIX, data_agr_renamed["asset"])
+    fig.add_trace(go.Pie(labels=data_agr_renamed["asset"], values=data_agr_renamed["allocation"],
                          textinfo='label+value+percent',
                          showlegend=False,marker=dict(colors=new_color_list), hole=.3), row=1, col=1)
     
@@ -255,7 +263,9 @@ def pie_plots_candidates(data,stock_codes,asset2color, window_allocation=4):
         ordered=True
     )
     data_agr = data_agr.sort_values('asset_cat')
-    fig.add_trace(go.Pie(labels=data_agr["asset"],values=data_agr["allocation"],
+    data_agr_renamed = data_agr
+    data_agr_renamed["asset"] = np.where(data_agr_renamed["asset"].isin(flag_items), data_agr_renamed["asset"].astype(str) + SUFFIX, data_agr_renamed["asset"])
+    fig.add_trace(go.Pie(labels=data_agr_renamed["asset"],values=data_agr_renamed["allocation"],
                          textinfo='label+value+percent',
                          showlegend=False,marker=dict(colors=new_color_list), hole=.3), row=1, col=2)
 
@@ -263,11 +273,10 @@ def pie_plots_candidates(data,stock_codes,asset2color, window_allocation=4):
     fig.update_layout(height=+500, width=1200, title_text="Individual candidate allocations")
     return fig
 
-def pie_plots_benchmarks(data, target_variables,asset2color,window_allocation=4):
+def pie_plots_benchmarks(data, target_variables,asset2color,window_allocation=4, flag_items:list=[]):
     fig = make_subplots(rows=1, cols=2, 
                         specs=[[{"type": "domain"}, {"type": "domain"}]],
                     subplot_titles=["estimated benchmark", "observed"],vertical_spacing=0.08)
-    n_colors= len(COLOR_LIST)
     new_color_list = list()
     list_pd = list()
     
@@ -293,8 +302,9 @@ def pie_plots_benchmarks(data, target_variables,asset2color,window_allocation=4)
     aggr_df = pd.concat(list_pd)
     aggr_df["allocation"] = aggr_df["allocation"]*100
     aggr_df["allocation"] = aggr_df["allocation"].round(2)
-
-    fig.add_trace(go.Pie(labels=aggr_df["asset"],values=aggr_df["allocation"],
+    aggr_df_renamed = aggr_df
+    aggr_df_renamed["asset"] = np.where(aggr_df_renamed["asset"].isin(flag_items), aggr_df_renamed["asset"].astype(str) + SUFFIX, aggr_df_renamed["asset"])
+    fig.add_trace(go.Pie(labels=aggr_df_renamed["asset"],values=aggr_df_renamed["allocation"],
                          textinfo='label+value+percent',
                          showlegend=False,marker=dict(colors=new_color_list), hole=.3), row=1, col=1)
 
@@ -325,7 +335,10 @@ def pie_plots_benchmarks(data, target_variables,asset2color,window_allocation=4)
     aggr_df["allocation"] = aggr_df["allocation"]*100
     aggr_df["allocation"] = aggr_df["allocation"].round(2)
 
-    fig.add_trace(go.Pie(labels=aggr_df["asset"],values=aggr_df["allocation"],
+    aggr_df_renamed = aggr_df
+    aggr_df_renamed["asset"] = np.where(aggr_df_renamed["asset"].isin(flag_items), aggr_df_renamed["asset"].astype(str) + SUFFIX, aggr_df_renamed["asset"])
+
+    fig.add_trace(go.Pie(labels=aggr_df_renamed["asset"],values=aggr_df_renamed["allocation"],
                          textinfo='label+value+percent',
                          showlegend=False,marker=dict(colors=new_color_list), hole=.3), row=1, col=2)
    
@@ -340,15 +353,16 @@ def get_sirius_last(data, window = 7):
     result = data[(data["rn"] == 1)].sort_values("diff",ascending=False)
     return result
 
-def sirius_summary_plot(data, asset2color, window=4):
+def sirius_summary_plot(data, asset2color, window=4, flag_items:list=[]):
     result = get_sirius_last(data, window)
     fig = make_subplots(rows=1, cols=1)
     for asset in result.asset.unique():
         color = asset2color.get(asset)
         df = result[result.asset == asset]
-        fig.add_trace(go.Scatter(x=df["asset"],y=df[f"mean_proba_target_down"],marker_size=15,hovertemplate="prob go down: %{y}",
+        asset = _add_suffix(asset, flag_items)
+        fig.add_trace(go.Scatter(x=df["asset"],y=df["mean_proba_target_down"],marker_size=15,hovertemplate="prob go down: %{y}",
                                  name=asset,legendgroup=asset,line_color=color,marker_symbol="triangle-down"), row=1, col=1)
-        fig.add_trace(go.Scatter(x=df["asset"],y=df[f"mean_proba_target_up"],marker_size=15,hovertemplate="prob go up: %{y}",
+        fig.add_trace(go.Scatter(x=df["asset"],y=df["mean_proba_target_up"],marker_size=15,hovertemplate="prob go up: %{y}",
                                  name=asset,legendgroup=asset,showlegend=False,marker_symbol="triangle-up",line_color=color), row=1, col=1)
     fig.update_layout(height=400, width=1200, title_text="sirius probas summary")
     return fig
@@ -376,7 +390,7 @@ def get_corr_clusters(correlations, threshold=0.3):
          clusters.append(cluster)
     return clusters
 
-def plot_vol_clusters(data,clusters, date, features,trad_days=14,lags=3, asset2colors:dict=dict()):
+def plot_vol_clusters(data,clusters, date, features,trad_days=14,lags=3, asset2colors:dict=dict(), flag_items:list=[]):
     data=data[data["Date"] >= date].sort_values("Date").set_index("Date").copy()
     for code in features:
         data[code] = np.log(data[code]/data[code].shift(lags))
@@ -393,7 +407,7 @@ def plot_vol_clusters(data,clusters, date, features,trad_days=14,lags=3, asset2c
                     legendgroup=code,
                     marker_symbol="hexagon",
                     marker = dict(color=color,size=15),
-                    name=code),col=1,row=1)
+                    name=_add_suffix(code, flag_items)),col=1,row=1)
     fig.update_xaxes(title_text="Current Volatility", row=1, col=1)
     fig.update_yaxes(title_text="Cluster", row=1, col=1)
     fig.update_layout(height=500, width=700, title_text="Clustered assets")
@@ -408,13 +422,14 @@ def get_last_volatilities(data, lags, date, features, trad_days=14):
     df = data.sort_index().tail(1)
     return df.melt(value_vars=features,var_name="asset",value_name="volatility")
 
-def plot_parallel_summary(data_vol, data_sirius, data_andromeda, tickers):
+def plot_parallel_summary(data_vol, data_sirius, data_andromeda, tickers, flag_items:list=[]):
     df_summary = (
         data_vol
         .merge(data_sirius, on=["asset"])
         .merge(data_andromeda, on=["asset"])
     )
     vals_pass =list(range(len(tickers)))
+    vals_pass_renamed = [_add_suffix(code, flag_items) for code in tickers]
     fig = make_subplots(rows=1, cols=1)
     fig.add_trace(
         go.Parcoords(
@@ -424,7 +439,7 @@ def plot_parallel_summary(data_vol, data_sirius, data_andromeda, tickers):
             ),
             dimensions = list([
                 dict(
-                    label = 'asset', values = vals_pass, ticktext = tickers, tickvals = vals_pass ),
+                    label = 'asset', values = vals_pass, ticktext = vals_pass_renamed, tickvals = vals_pass ),
                 dict(
                     label = 'volatility', values = df_summary['volatility']),
                 dict(
